@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الميناء — مكان آمن للحديث</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rakkas&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --font-scale: 1; }
+  [data-theme="navy"]{
+    --bg:#0B1E3D; --bg-deep:#071531; --card:#142B52; --card-hi:#1B3763;
+    --accent:#5B9BD9; --accent-strong:#8FC1FF; --text:#E8EDF5; --text-dim:#AEBEDA;
+    --star:#EAF2FF; --star-gold:#FFD98A; --moon:#F4E9C9; --cloud:#BFD3EE; --danger:#FF9B9B;
+  }
+  [data-theme="black"]{
+    --bg:#0A0A0D; --bg-deep:#050506; --card:#17171C; --card-hi:#212127;
+    --accent:#D4AF6A; --accent-strong:#E8CC94; --text:#F0EFEF; --text-dim:#B7B4BD;
+    --star:#F5F5F5; --star-gold:#FFD98A; --moon:#EFE3BE; --cloud:#8A8A93; --danger:#FF9B9B;
+  }
+  [data-theme="purple"]{
+    --bg:#241640; --bg-deep:#170D2B; --card:#31204F; --card-hi:#3E2A63;
+    --accent:#B79CFF; --accent-strong:#D3C2FF; --text:#F1ECFF; --text-dim:#C9BBEA;
+    --star:#F1EBFF; --star-gold:#FFD98A; --moon:#E9DBFF; --cloud:#9E86D6; --danger:#FFAFAF;
+  }
+  [data-theme="pink"]{
+    --bg:#2B0F22; --bg-deep:#1D0917; --card:#3B1530; --card-hi:#4A1B3D;
+    --accent:#FF4FA3; --accent-strong:#FF9AD1; --text:#FBEAF3; --text-dim:#E3B9D3;
+    --star:#FFF0F7; --star-gold:#FFD98A; --moon:#FCD9EA; --cloud:#C97CA8; --danger:#FFB4CE;
+  }
+  *{ box-sizing: border-box; }
+  html{ font-size: calc(18px * var(--font-scale)); }
+  body{
+    margin:0; min-height:100vh; position: relative;
+    background: var(--bg); color: var(--text);
+    font-family: 'Cairo', Tahoma, Arial, sans-serif;
+    line-height: 1.7; transition: background 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
+  }
+  h1,h2,h3, .brand, .tab, .btn{ font-family: 'Rakkas', 'Cairo', serif; font-weight: 400; letter-spacing: 0.3px; }
+  a{ color: var(--accent-strong); }
+  button, input, textarea, select{ font-family: inherit; font-size: 1rem; }
+  :focus-visible{ outline: 3px solid #FFD166; outline-offset: 2px; }
+
+  .stars{
+    position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background-image:
+      radial-gradient(1.6px 1.6px at 8% 18%, var(--star), transparent 60%),
+      radial-gradient(1.2px 1.2px at 22% 55%, var(--star), transparent 60%),
+      radial-gradient(2px 2px at 38% 12%, var(--star-gold), transparent 60%),
+      radial-gradient(1.2px 1.2px at 52% 70%, var(--star), transparent 60%),
+      radial-gradient(1.6px 1.6px at 68% 30%, var(--star-gold), transparent 60%),
+      radial-gradient(1.2px 1.2px at 80% 58%, var(--star), transparent 60%),
+      radial-gradient(2px 2px at 90% 78%, var(--star), transparent 60%),
+      radial-gradient(1.2px 1.2px at 14% 82%, var(--star-gold), transparent 60%),
+      radial-gradient(1.6px 1.6px at 30% 38%, var(--star), transparent 60%),
+      radial-gradient(1.2px 1.2px at 60% 14%, var(--star), transparent 60%);
+    background-repeat: repeat; background-size: 260px 240px; opacity: 0.9;
+    transition: opacity 0.4s ease;
+  }
+  .moon{
+    position: fixed; top: 5%; inset-inline-end: 8%; width: 64px; height: 64px;
+    border-radius: 50%; background: var(--moon); z-index: -2; pointer-events:none;
+    box-shadow: 0 0 30px 4px color-mix(in srgb, var(--moon) 45%, transparent);
+  }
+  .moon::after{
+    content:''; position:absolute; top:-8px; inset-inline-start:-20px; width:64px; height:64px;
+    border-radius:50%; background: var(--bg-deep);
+  }
+  .cloud{ position: fixed; border-radius: 50%; filter: blur(34px); opacity: 0.16; background: var(--cloud); z-index:-1; pointer-events:none; }
+  .cloud.c1{ width: 320px; height: 130px; bottom: -50px; inset-inline-start: -60px; }
+  .cloud.c2{ width: 260px; height: 110px; bottom: -30px; inset-inline-end: -70px; }
+  .cloud.c3{ width: 200px; height: 90px; bottom: 90px; inset-inline-start: 30%; }
+
+  .wrap{ max-width: 640px; margin: 0 auto; padding: 1.25rem 1rem 4rem; position: relative; z-index: 1; }
+
+  header.topbar{ display:flex; align-items:center; justify-content:space-between; gap: 0.75rem; padding: 1rem 0 1.25rem; flex-wrap: wrap; }
+  .brand-row{ display:flex; align-items:center; gap:0.65rem; }
+  .brand{ font-size: 1.7rem; color: var(--text); }
+  .beam-wrap{ position:relative; width:34px; height:34px; }
+  .lighthouse{ width:34px; height:34px; }
+  .lighthouse .beam{ transform-origin: 17px 10px; animation: sweep 4s ease-in-out infinite; opacity: 0.85; }
+  @keyframes sweep{ 0%,100%{ transform: rotate(-18deg); } 50%{ transform: rotate(18deg); } }
+  @media (prefers-reduced-motion: reduce){ .lighthouse .beam{ animation: none; } }
+
+  .controls{ display:flex; align-items:center; gap: 0.6rem; flex-wrap: wrap; }
+  .textsize{ display:flex; align-items:center; gap: 0.25rem; background: var(--card); border:1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 0.2rem; }
+  .textsize button{ background: transparent; border: none; color: var(--text); width: 2.1rem; height: 2.1rem; border-radius: 999px; cursor: pointer; font-weight: 700; font-family:'Cairo'; }
+  .textsize button:hover{ background: var(--card-hi); }
+
+  .theme-picker{ display:flex; align-items:center; gap:0.4rem; background: var(--card); border:1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 0.3rem; }
+  .swatch{ width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); cursor: pointer; padding: 0; position: relative; }
+  .swatch[aria-pressed="true"]{ outline: 2px solid var(--text); outline-offset: 2px; }
+  .swatch.sw-navy{ background: linear-gradient(135deg,#0B1E3D,#5B9BD9); }
+  .swatch.sw-black{ background: linear-gradient(135deg,#0A0A0D,#D4AF6A); }
+  .swatch.sw-purple{ background: linear-gradient(135deg,#241640,#B79CFF); }
+  .swatch.sw-pink{ background: linear-gradient(135deg,#2B0F22,#FF4FA3); }
+
+  .card{ background: var(--card); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 1.1rem; margin-bottom: 1rem; }
+  label{ display:block; margin-bottom: 0.3rem; color: var(--text-dim); font-size: 0.95rem; }
+  input[type=text], input[type=password], textarea{
+    width:100%; background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.14); color: var(--text);
+    border-radius: 10px; padding: 0.65rem 0.75rem; margin-bottom: 0.85rem; resize: vertical;
+  }
+  .btn{ background: var(--accent); color: var(--bg-deep); border: none; border-radius: 10px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; }
+  .btn:hover{ background: var(--accent-strong); }
+  .btn:disabled{ opacity: 0.6; cursor: default; }
+  .btn.ghost{ background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.2); font-family:'Cairo'; }
+  .btn.small{ padding: 0.35rem 0.8rem; font-size: 0.9rem; }
+  .row{ display:flex; gap:0.6rem; align-items:center; flex-wrap: wrap; }
+  .between{ justify-content: space-between; }
+  .muted{ color: var(--text-dim); font-size: 0.92rem; }
+  .error{ color: var(--danger); font-size: 0.92rem; margin: -0.4rem 0 0.7rem; }
+  .notice{ color: var(--star-gold); font-size: 0.88rem; margin: -0.4rem 0 0.7rem; }
+  .switchline{ margin-top: 0.6rem; }
+
+  .moods{ display:flex; gap: 0.4rem; margin-bottom: 0.85rem; }
+  .mood-opt{ background: var(--bg-deep); border: 2px solid rgba(255,255,255,0.14); border-radius: 10px; width: 2.4rem; height: 2.4rem; font-size: 1.2rem; cursor: pointer; }
+  .mood-opt[aria-pressed="true"]{ border-color: var(--accent); background: var(--card-hi); }
+
+  .tabs{ display:flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .tab{ flex:1; text-align:center; padding: 0.6rem; border-radius: 10px; cursor:pointer; border: 1px solid rgba(255,255,255,0.12); background: var(--card); color: var(--text-dim); font-size: 1.05rem; }
+  .tab.active{ background: var(--accent); color: var(--bg-deep); border-color: var(--accent); }
+
+  .post, .msg{ border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0.85rem 0; }
+  .post:last-child, .msg:last-child{ border-bottom:none; }
+  .post-head, .msg-head{ display:flex; justify-content:space-between; gap:0.5rem; margin-bottom: 0.3rem; align-items:center; }
+  .author{ font-weight: 700; font-family:'Cairo'; }
+  .ts{ color: var(--text-dim); font-size: 0.85rem; }
+  .del{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:0.85rem; text-decoration: underline; padding:0; font-family:'Cairo'; }
+  .del:hover{ color: var(--danger); }
+  .empty{ text-align:center; color: var(--text-dim); padding: 1.5rem 0; }
+  .post-mood{ font-size: 1.1rem; }
+
+  #chatList{ max-height: 380px; overflow-y:auto; margin-bottom: 0.75rem; }
+  .hidden{ display:none !important; }
+  .status{ font-size: 0.85rem; color: var(--text-dim); text-align:center; margin-top: 0.5rem; }
+</style>
+</head>
+<body data-theme="navy">
+<div class="stars"></div>
+<div class="moon"></div>
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand-row">
+      <div class="beam-wrap" aria-hidden="true">
+        <svg class="lighthouse" viewBox="0 0 34 34">
+          <polygon class="beam" points="17,10 34,0 34,20" fill="var(--accent-strong)"></polygon>
+          <rect x="13" y="10" width="8" height="16" fill="var(--text)"></rect>
+          <polygon points="11,10 23,10 19,4 15,4" fill="var(--text)"></polygon>
+          <rect x="10" y="26" width="14" height="4" fill="var(--text)"></rect>
+          <circle cx="17" cy="9" r="1.6" fill="var(--accent)"></circle>
+        </svg>
+      </div>
+      <span class="brand">الميناء</span>
+    </div>
+    <div class="controls">
+      <div class="textsize" role="group" aria-label="حجم الخط">
+        <button type="button" id="fontDown" aria-label="تصغير الخط">أ−</button>
+        <button type="button" id="fontUp" aria-label="تكبير الخط">أ+</button>
+      </div>
+      <div class="theme-picker" role="group" aria-label="اختر المظهر">
+        <button type="button" class="swatch sw-navy" data-theme-btn="navy" aria-label="كحلي" title="كحلي" aria-pressed="true"></button>
+        <button type="button" class="swatch sw-black" data-theme-btn="black" aria-label="أسود" title="أسود" aria-pressed="false"></button>
+        <button type="button" class="swatch sw-purple" data-theme-btn="purple" aria-label="بنفسجي" title="بنفسجي" aria-pressed="false"></button>
+        <button type="button" class="swatch sw-pink" data-theme-btn="pink" aria-label="وردي غامق" title="وردي غامق" aria-pressed="false"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen">
+    <div class="card">
+      <h2 id="authTitle" style="margin-top:0">مرحبًا بك في الميناء</h2>
+      <p class="muted" style="margin-top:-0.4rem">مكان صغير وهادئ للنشر والدردشة مع أقرب أصدقائك.</p>
+
+      <div id="loginForm">
+        <label for="loginUser">اسم المستخدم</label>
+        <input type="text" id="loginUser" autocomplete="username">
+        <label for="loginPass">كلمة المرور</label>
+        <input type="password" id="loginPass" autocomplete="current-password">
+        <div id="loginError" class="error hidden"></div>
+        <div class="row">
+          <button class="btn" id="loginBtn">تسجيل الدخول</button>
+        </div>
+        <p class="switchline muted">جديد هنا؟ <a href="#" id="showSignup">أنشئ حسابًا</a></p>
+      </div>
+
+      <div id="signupForm" class="hidden">
+        <label for="suUser">اختر اسم مستخدم</label>
+        <input type="text" id="suUser" autocomplete="username">
+        <label for="suPass">اختر كلمة مرور (٦ أحرف على الأقل)</label>
+        <input type="password" id="suPass" autocomplete="new-password">
+        <div id="signupError" class="error hidden"></div>
+        <div class="row">
+          <button class="btn" id="signupBtn">إنشاء الحساب</button>
+        </div>
+        <p class="switchline muted">لديك حساب؟ <a href="#" id="showLogin">سجّل الدخول</a></p>
+      </div>
+      <p class="status" id="authStatus"></p>
+    </div>
+    <p class="muted" style="text-align:center">حسابك محفوظ فعليًا الآن عبر Firebase، ويبقى تسجيل دخولك محفوظًا على هذا المتصفح.</p>
+  </div>
+
+  <!-- APP SCREEN -->
+  <div id="appScreen" class="hidden">
+    <div class="card row between">
+      <span>تم تسجيل الدخول باسم <strong id="whoami"></strong></span>
+      <button class="btn ghost small" id="logoutBtn">تسجيل الخروج</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabFeedBtn">المنشورات</div>
+      <div class="tab" id="tabChatBtn">الدردشة</div>
+    </div>
+
+    <div id="tabFeed">
+      <div class="card">
+        <label for="postText">شارك شيئًا مع الميناء</label>
+        <div class="moods" role="group" aria-label="المزاج">
+          <button type="button" class="mood-opt" data-mood="" aria-pressed="true" title="بدون">—</button>
+          <button type="button" class="mood-opt" data-mood="😊" aria-pressed="false" title="سعيد">😊</button>
+          <button type="button" class="mood-opt" data-mood="😢" aria-pressed="false" title="حزين">😢</button>
+          <button type="button" class="mood-opt" data-mood="😴" aria-pressed="false" title="متعب">😴</button>
+          <button type="button" class="mood-opt" data-mood="🥳" aria-pressed="false" title="مبتهج">🥳</button>
+          <button type="button" class="mood-opt" data-mood="😡" aria-pressed="false" title="منزعج">😡</button>
+        </div>
+        <textarea id="postText" rows="3" placeholder="بماذا تفكر؟"></textarea>
+        <button class="btn" id="postBtn">نشر</button>
+        <div id="postNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+      </div>
+      <div class="card" id="postsCard">
+        <div id="postsList"><p class="empty">لا توجد منشورات بعد — كن أول من يشارك.</p></div>
+      </div>
+    </div>
+
+    <div id="tabChat" class="hidden">
+      <div class="card">
+        <div id="chatList"><p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p></div>
+        <div class="row">
+          <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
+          <button class="btn" id="chatSendBtn">إرسال</button>
+        </div>
+      </div>
+    </div>
+    <p class="status" id="appStatus"></p>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, updateProfile
+  } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot,
+    query, orderBy, limit, limitToLast, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+  // Your Harbor Firebase project
+  const firebaseConfig = {
+    apiKey: "AIzaSyCCof1wHa_632SNu0lwMhfEJHquFsMb09Y",
+    authDomain: "harbor-8cd0b.firebaseapp.com",
+    projectId: "harbor-8cd0b",
+    storageBucket: "harbor-8cd0b.firebasestorage.app",
+    messagingSenderId: "948060766996",
+    appId: "1:948060766996:web:fdcf89c3ffd83f6c5d7801",
+    measurementId: "G-R3NLR7Z24H"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+  const postsCol = collection(db, 'posts');
+  const chatCol = collection(db, 'messages');
+
+  let currentUser = null;   // { uid, displayName }
+  let selectedMood = '';
+  let fontStep = 0;
+  let postsCache = [];
+  let chatCache = [];
+
+  const $ = (id) => document.getElementById(id);
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function timeAgo(millis){
+    const s = Math.floor((Date.now() - millis)/1000);
+    if (s < 60) return 'الآن';
+    const m = Math.floor(s/60); if (m < 60) return 'قبل ' + m + ' د';
+    const h = Math.floor(m/60); if (h < 24) return 'قبل ' + h + ' س';
+    return 'قبل ' + Math.floor(h/24) + ' ي';
+  }
+
+  function usernameToEmail(u){
+    const clean = u.toLowerCase().trim().replace(/[^a-z0-9_.-]/g, '_');
+    return clean + '@harbor.local';
+  }
+
+  // ---------- Theme + text size (kept on this browser, not shared data) ----------
+  function loadPrefs(){
+    try{ return JSON.parse(localStorage.getItem('harbor-prefs') || '{}'); }catch(e){ return {}; }
+  }
+  function savePrefs(prefs){
+    try{ localStorage.setItem('harbor-prefs', JSON.stringify(prefs)); }catch(e){}
+  }
+  function applyTheme(theme){
+    document.body.setAttribute('data-theme', theme);
+    document.querySelectorAll('.swatch').forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.dataset.themeBtn === theme ? 'true' : 'false');
+    });
+  }
+  function applyFontStep(step){
+    fontStep = Math.max(-2, Math.min(3, step));
+    document.documentElement.style.setProperty('--font-scale', 1 + (fontStep * 0.1));
+  }
+  document.querySelectorAll('.swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.themeBtn;
+      applyTheme(theme);
+      const prefs = loadPrefs(); prefs.theme = theme; savePrefs(prefs);
+    });
+  });
+  $('fontUp').addEventListener('click', () => {
+    applyFontStep(fontStep + 1);
+    const prefs = loadPrefs(); prefs.fontStep = fontStep; savePrefs(prefs);
+  });
+  $('fontDown').addEventListener('click', () => {
+    applyFontStep(fontStep - 1);
+    const prefs = loadPrefs(); prefs.fontStep = fontStep; savePrefs(prefs);
+  });
+  (function bootPrefs(){
+    const prefs = loadPrefs();
+    applyTheme(prefs.theme || 'navy');
+    applyFontStep(prefs.fontStep || 0);
+  })();
+
+  document.querySelectorAll('.mood-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedMood = btn.dataset.mood;
+      document.querySelectorAll('.mood-opt').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    });
+  });
+
+  // ---------- Auth ----------
+  $('showSignup').addEventListener('click', (e) => {
+    e.preventDefault();
+    $('loginForm').classList.add('hidden');
+    $('signupForm').classList.remove('hidden');
+    $('authTitle').textContent = 'إنشاء حسابك';
+  });
+  $('showLogin').addEventListener('click', (e) => {
+    e.preventDefault();
+    $('signupForm').classList.add('hidden');
+    $('loginForm').classList.remove('hidden');
+    $('authTitle').textContent = 'مرحبًا بك في الميناء';
+  });
+
+  $('signupBtn').addEventListener('click', async () => {
+    const uname = $('suUser').value.trim();
+    const pass = $('suPass').value;
+    $('signupError').classList.add('hidden');
+    if (!uname || !pass){
+      $('signupError').textContent = 'يرجى ملء كلا الحقلين.';
+      $('signupError').classList.remove('hidden');
+      return;
+    }
+    $('signupBtn').disabled = true;
+    $('authStatus').textContent = 'جارٍ إنشاء الحساب…';
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, usernameToEmail(uname), pass);
+      await updateProfile(cred.user, { displayName: uname });
+      $('authStatus').textContent = '';
+    }catch(err){
+      $('authStatus').textContent = '';
+      let msg = 'حدث خطأ غير متوقع، حاول مرة أخرى.';
+      if (err.code === 'auth/email-already-in-use') msg = 'اسم المستخدم هذا مستخدم بالفعل.';
+      else if (err.code === 'auth/weak-password') msg = 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل.';
+      else if (err.code === 'auth/invalid-email') msg = 'اسم المستخدم يحتوي على رموز غير مسموحة.';
+      $('signupError').textContent = msg;
+      $('signupError').classList.remove('hidden');
+    }finally{
+      $('signupBtn').disabled = false;
+    }
+  });
+
+  $('loginBtn').addEventListener('click', async () => {
+    const uname = $('loginUser').value.trim();
+    const pass = $('loginPass').value;
+    $('loginError').classList.add('hidden');
+    if (!uname || !pass){
+      $('loginError').textContent = 'يرجى ملء كلا الحقلين.';
+      $('loginError').classList.remove('hidden');
+      return;
+    }
+    $('loginBtn').disabled = true;
+    $('authStatus').textContent = 'جارٍ التحقق…';
+    try{
+      await signInWithEmailAndPassword(auth, usernameToEmail(uname), pass);
+      $('authStatus').textContent = '';
+    }catch(err){
+      $('authStatus').textContent = '';
+      let msg = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+      if (err.code === 'auth/too-many-requests') msg = 'محاولات كثيرة جدًا، حاول لاحقًا.';
+      $('loginError').textContent = msg;
+      $('loginError').classList.remove('hidden');
+    }finally{
+      $('loginBtn').disabled = false;
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    await signOut(auth);
+    $('loginUser').value = ''; $('loginPass').value = '';
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user){
+      currentUser = { uid: user.uid, displayName: user.displayName || 'صديق' };
+      showApp();
+    } else {
+      currentUser = null;
+      unsubscribePosts && unsubscribePosts();
+      unsubscribeChat && unsubscribeChat();
+      $('appScreen').classList.add('hidden');
+      $('authScreen').classList.remove('hidden');
+    }
+  });
+
+  // ---------- Tabs ----------
+  $('tabFeedBtn').addEventListener('click', () => {
+    $('tabFeedBtn').classList.add('active'); $('tabChatBtn').classList.remove('active');
+    $('tabFeed').classList.remove('hidden'); $('tabChat').classList.add('hidden');
+  });
+  $('tabChatBtn').addEventListener('click', () => {
+    $('tabChatBtn').classList.add('active'); $('tabFeedBtn').classList.remove('active');
+    $('tabChat').classList.remove('hidden'); $('tabFeed').classList.add('hidden');
+  });
+
+  // ---------- Feed ----------
+  $('postBtn').addEventListener('click', async () => {
+    const text = $('postText').value.trim();
+    if (!text || !currentUser) return;
+    $('postBtn').disabled = true;
+    try{
+      await addDoc(postsCol, {
+        author: currentUser.displayName,
+        uid: currentUser.uid,
+        text,
+        mood: selectedMood,
+        ts: serverTimestamp()
+      });
+      $('postText').value = '';
+      $('postNotice').classList.add('hidden');
+    }catch(err){
+      $('postNotice').textContent = 'تعذّر نشر منشورك الآن، تحقق من اتصالك وحاول مرة أخرى.';
+      $('postNotice').classList.remove('hidden');
+    }finally{
+      $('postBtn').disabled = false;
+    }
+  });
+
+  function renderPosts(){
+    const list = $('postsList');
+    if (!postsCache.length){
+      list.innerHTML = '<p class="empty">لا توجد منشورات بعد — كن أول من يشارك.</p>';
+      return;
+    }
+    list.innerHTML = postsCache.map(p => `
+      <div class="post">
+        <div class="post-head">
+          <span class="row" style="gap:0.4rem"><span class="author">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
+          <span class="ts">${timeAgo(p.tsMillis)}</span>
+        </div>
+        <div>${escapeHtml(p.text)}</div>
+        ${currentUser && p.uid === currentUser.uid ? `<div style="margin-top:0.4rem"><button class="del" data-id="${p.id}">حذف</button></div>` : ''}
+      </div>
+    `).join('');
+    list.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }catch(e){}
+      });
+    });
+  }
+
+  function renderChat(){
+    const list = $('chatList');
+    if (!chatCache.length){
+      list.innerHTML = '<p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p>';
+      return;
+    }
+    list.innerHTML = chatCache.map(m => `
+      <div class="msg">
+        <div class="msg-head">
+          <span class="author">${escapeHtml(m.user)}</span>
+          <span class="ts">${timeAgo(m.tsMillis)}</span>
+        </div>
+        <div>${escapeHtml(m.text)}</div>
+      </div>
+    `).join('');
+    list.scrollTop = list.scrollHeight;
+  }
+
+  $('chatSendBtn').addEventListener('click', sendChat);
+  $('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+  async function sendChat(){
+    const text = $('chatInput').value.trim();
+    if (!text || !currentUser) return;
+    $('chatInput').value = '';
+    try{
+      await addDoc(chatCol, {
+        user: currentUser.displayName,
+        uid: currentUser.uid,
+        text,
+        ts: serverTimestamp()
+      });
+    }catch(err){
+      $('appStatus').textContent = 'تعذّر إرسال الرسالة، تحقق من اتصالك.';
+    }
+  }
+
+  let unsubscribePosts = null;
+  let unsubscribeChat = null;
+
+  function showApp(){
+    $('authScreen').classList.add('hidden');
+    $('appScreen').classList.remove('hidden');
+    $('whoami').textContent = currentUser.displayName;
+
+    unsubscribePosts && unsubscribePosts();
+    const postsQuery = query(postsCol, orderBy('ts', 'desc'), limit(200));
+    unsubscribePosts = onSnapshot(postsQuery, (snap) => {
+      postsCache = snap.docs.map(d => {
+        const data = d.data();
+        return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() };
+      });
+      renderPosts();
+    }, () => {
+      $('appStatus').textContent = 'تعذّر تحميل المنشورات — تحقق من قواعد Firestore.';
+    });
+
+    unsubscribeChat && unsubscribeChat();
+    const chatQuery = query(chatCol, orderBy('ts', 'asc'), limitToLast(200));
+    unsubscribeChat = onSnapshot(chatQuery, (snap) => {
+      chatCache = snap.docs.map(d => {
+        const data = d.data();
+        return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() };
+      });
+      renderChat();
+    }, () => {
+      $('appStatus').textContent = 'تعذّر تحميل الدردشة — تحقق من قواعد Firestore.';
+    });
+  }
+</script>
+</body>
+</html>
