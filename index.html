@@ -155,6 +155,30 @@
   .corner.br{ bottom:6px; right:6px; }
 
   img.emoji{ filter: saturate(0.78) brightness(1.08) drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
+
+  .book-card{ overflow: hidden; }
+  .flip-stage{ perspective: 1400px; }
+  .spread{
+    display:flex; gap: 1rem; align-items: stretch; transition: transform 0.4s ease, opacity 0.4s ease;
+    transform-style: preserve-3d;
+  }
+  .spread.flip-out-next{ transform: rotateY(-12deg) translateX(-30px); opacity: 0; }
+  .spread.flip-out-prev{ transform: rotateY(12deg) translateX(30px); opacity: 0; }
+  .page-photo{
+    flex: 1 1 48%; min-width: 130px; border-radius: 12px; overflow:hidden;
+    background: rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center; min-height: 160px;
+  }
+  .page-photo img{ width:100%; height:100%; object-fit: cover; display:block; max-height: 280px; }
+  .page-text{
+    flex: 1 1 48%; min-width: 130px; display:flex; flex-direction:column; justify-content:center;
+    border-inline-start: 1px dashed var(--line); padding-inline-start: 1rem;
+  }
+  @media (max-width: 480px){
+    .spread{ flex-direction: column; }
+    .page-text{ border-inline-start: none; border-top: 1px dashed var(--line); padding-inline-start: 0; padding-top: 0.8rem; }
+  }
+  .book-nav{ display:flex; justify-content:space-between; align-items:center; margin-top: 1rem; }
+  .page-indicator{ color: var(--text-dim); font-size: 0.9rem; }
 </style>
 </head>
 <body data-theme="purple">
@@ -239,6 +263,7 @@
     <div class="tabs">
       <div class="tab active" id="tabFeedBtn">المنشورات</div>
       <div class="tab" id="tabChatBtn">الدردشة</div>
+      <div class="tab" id="tabAlbumBtn">الألبوم</div>
     </div>
 
     <div id="tabFeed">
@@ -268,6 +293,40 @@
         <div class="row">
           <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
           <button class="btn" id="chatSendBtn">إرسال</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabAlbum" class="hidden">
+      <div class="card">
+        <label for="albumPhotoInput">أضف صورة إلى الألبوم</label>
+        <input type="file" id="albumPhotoInput" accept="image/*" style="margin-bottom:0.85rem;">
+        <label for="albumCaption">صف هذه الصورة</label>
+        <textarea id="albumCaption" rows="2" placeholder="اكتب وصفًا لطيفًا لهذه الصورة…"></textarea>
+        <button class="btn" id="albumAddBtn">إضافة</button>
+        <div id="albumNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+      </div>
+      <div class="card fancy-card book-card">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div id="albumEmpty" class="empty">الألبوم فارغ حتى الآن — أضف أول صورة.</div>
+        <div id="albumStage" class="flip-stage hidden">
+          <div class="spread" id="albumSpread">
+            <div class="page-photo"><img id="albumPhoto" alt=""></div>
+            <div class="page-text">
+              <div class="who" style="margin-bottom:0.4rem">
+                <span id="albumAvatarChip"></span>
+                <span class="author" id="albumAuthor"></span>
+                <span class="ts" id="albumTs"></span>
+              </div>
+              <div id="albumCaptionText"></div>
+              <button class="del hidden" id="albumDelBtn" style="margin-top:0.6rem">حذف</button>
+            </div>
+          </div>
+        </div>
+        <div class="book-nav hidden" id="albumNav">
+          <button class="btn ghost small" id="albumPrevBtn">السابق</button>
+          <span class="page-indicator" id="albumPageIndicator"></span>
+          <button class="btn ghost small" id="albumNextBtn">التالي</button>
         </div>
       </div>
     </div>
@@ -331,6 +390,7 @@
   const postsCol = collection(db, 'posts');
   const chatCol = collection(db, 'messages');
   const profilesCol = collection(db, 'profiles');
+  const albumCol = collection(db, 'album');
 
   let currentUser = null;
   let myProfile = { displayName: '', photo: '' };
@@ -507,7 +567,7 @@
     $('loginUser').value = ''; $('loginPass').value = ''; $('loginPassOverlay').textContent = '';
   });
 
-  let unsubscribePosts = null, unsubscribeChat = null, unsubscribeProfiles = null, unsubscribeMyProfile = null;
+  let unsubscribePosts = null, unsubscribeChat = null, unsubscribeProfiles = null, unsubscribeMyProfile = null, unsubscribeAlbum = null;
 
   onAuthStateChanged(auth, (user) => {
     if (user){
@@ -519,6 +579,7 @@
       unsubscribeChat && unsubscribeChat();
       unsubscribeProfiles && unsubscribeProfiles();
       unsubscribeMyProfile && unsubscribeMyProfile();
+      unsubscribeAlbum && unsubscribeAlbum();
       $('appScreen').classList.add('hidden');
       $('authScreen').classList.remove('hidden');
       $('profileModal').classList.add('hidden');
@@ -526,14 +587,17 @@
   });
 
   // ---------- Tabs ----------
-  $('tabFeedBtn').addEventListener('click', () => {
-    $('tabFeedBtn').classList.add('active'); $('tabChatBtn').classList.remove('active');
-    $('tabFeed').classList.remove('hidden'); $('tabChat').classList.add('hidden');
-  });
-  $('tabChatBtn').addEventListener('click', () => {
-    $('tabChatBtn').classList.add('active'); $('tabFeedBtn').classList.remove('active');
-    $('tabChat').classList.remove('hidden'); $('tabFeed').classList.add('hidden');
-  });
+  const tabButtons = { feed: $('tabFeedBtn'), chat: $('tabChatBtn'), album: $('tabAlbumBtn') };
+  const tabPanels = { feed: $('tabFeed'), chat: $('tabChat'), album: $('tabAlbum') };
+  function showTab(name){
+    Object.keys(tabButtons).forEach(k => {
+      tabButtons[k].classList.toggle('active', k === name);
+      tabPanels[k].classList.toggle('hidden', k !== name);
+    });
+  }
+  $('tabFeedBtn').addEventListener('click', () => showTab('feed'));
+  $('tabChatBtn').addEventListener('click', () => showTab('chat'));
+  $('tabAlbumBtn').addEventListener('click', () => showTab('album'));
 
   // ---------- Feed ----------
   $('postBtn').addEventListener('click', async () => {
@@ -624,6 +688,81 @@
       $('appStatus').textContent = 'تعذّر إرسال الرسالة، تحقق من اتصالك.';
     }
   }
+
+  // ---------- Album (flip-book) ----------
+  let albumCache = [];
+  let albumIndex = 0;
+
+  $('albumAddBtn').addEventListener('click', async () => {
+    const file = $('albumPhotoInput').files[0];
+    const caption = $('albumCaption').value.trim();
+    const notice = $('albumNotice');
+    notice.classList.add('hidden');
+    if (!file || !currentUser){
+      notice.textContent = 'يرجى اختيار صورة أولًا.';
+      notice.classList.remove('hidden');
+      return;
+    }
+    $('albumAddBtn').disabled = true;
+    try{
+      const photo = await compressImage(file, 480, 0.75);
+      await addDoc(albumCol, {
+        author: currentUser.displayName, uid: currentUser.uid, photo, caption, ts: serverTimestamp()
+      });
+      $('albumPhotoInput').value = '';
+      $('albumCaption').value = '';
+      albumIndex = 0;
+    }catch(err){
+      notice.textContent = 'تعذّرت إضافة الصورة الآن، جرّب صورة أصغر أو حاول مرة أخرى.';
+      notice.classList.remove('hidden');
+    }finally{
+      $('albumAddBtn').disabled = false;
+    }
+  });
+
+  function renderAlbum(){
+    if (!albumCache.length){
+      $('albumEmpty').classList.remove('hidden');
+      $('albumStage').classList.add('hidden');
+      $('albumNav').classList.add('hidden');
+      return;
+    }
+    $('albumEmpty').classList.add('hidden');
+    $('albumStage').classList.remove('hidden');
+    $('albumNav').classList.remove('hidden');
+    if (albumIndex >= albumCache.length) albumIndex = albumCache.length - 1;
+    if (albumIndex < 0) albumIndex = 0;
+    const item = albumCache[albumIndex];
+    $('albumPhoto').src = item.photo;
+    $('albumAuthor').textContent = item.author;
+    $('albumAvatarChip').innerHTML = avatarChipHtml(item.uid, item.author);
+    $('albumTs').textContent = timeAgo(item.tsMillis);
+    $('albumCaptionText').textContent = item.caption || '';
+    $('albumPageIndicator').textContent = (albumIndex + 1) + ' / ' + albumCache.length;
+    $('albumDelBtn').classList.toggle('hidden', !(currentUser && item.uid === currentUser.uid));
+    $('albumPrevBtn').disabled = albumIndex >= albumCache.length - 1;
+    $('albumNextBtn').disabled = albumIndex <= 0;
+    twemojify($('albumSpread'));
+  }
+
+  function flipTo(newIndex, direction){
+    if (newIndex < 0 || newIndex >= albumCache.length || newIndex === albumIndex) return;
+    const spread = $('albumSpread');
+    spread.classList.add(direction === 'next' ? 'flip-out-next' : 'flip-out-prev');
+    setTimeout(() => {
+      albumIndex = newIndex;
+      renderAlbum();
+      spread.classList.remove('flip-out-next', 'flip-out-prev');
+    }, 220);
+  }
+  // Newest photo is index 0; "next" moves toward older photos, "prev" moves back toward newer.
+  $('albumNextBtn').addEventListener('click', () => flipTo(albumIndex + 1, 'next'));
+  $('albumPrevBtn').addEventListener('click', () => flipTo(albumIndex - 1, 'prev'));
+  $('albumDelBtn').addEventListener('click', async () => {
+    const item = albumCache[albumIndex];
+    if (!item) return;
+    try{ await deleteDoc(doc(db, 'album', item.id)); }catch(e){}
+  });
 
   // ---------- Profile modal ----------
   $('avatarBtn').addEventListener('click', openProfileModal);
@@ -716,6 +855,13 @@
       chatCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
       renderChat();
     }, () => { $('appStatus').textContent = 'تعذّر تحميل الدردشة — تحقق من قواعد Firestore.'; });
+
+    unsubscribeAlbum && unsubscribeAlbum();
+    const albumQuery = query(albumCol, orderBy('ts', 'desc'), limit(200));
+    unsubscribeAlbum = onSnapshot(albumQuery, (snap) => {
+      albumCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
+      renderAlbum();
+    }, () => { $('appStatus').textContent = 'تعذّر تحميل الألبوم — تحقق من قواعد Firestore.'; });
   }
 </script>
 </body>
