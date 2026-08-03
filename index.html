@@ -280,7 +280,15 @@
           <button type="button" class="mood-opt" data-mood="😡" aria-pressed="false" title="منزعج">😡</button>
         </div>
         <textarea id="postText" rows="3" placeholder="بماذا تفكر؟"></textarea>
-        <button class="btn" id="postBtn">نشر</button>
+        <div id="postImagePreviewWrap" class="hidden" style="margin:0.5rem 0; display:flex; align-items:center; gap:0.6rem;">
+          <img id="postImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
+          <button class="del" id="postImageRemoveBtn" type="button">إزالة الصورة</button>
+        </div>
+        <div class="row">
+          <input type="file" id="postImageInput" accept="image/*" class="hidden">
+          <button class="btn ghost small" id="postAttachBtn" type="button" title="إرفاق صورة">📷 صورة</button>
+          <button class="btn" id="postBtn">نشر</button>
+        </div>
         <div id="postNotice" class="notice hidden" style="margin-top:0.6rem"></div>
       </div>
       <div class="card fancy-card" id="postsCard">
@@ -609,15 +617,44 @@
   $('tabAlbumBtn').addEventListener('click', () => showTab('album'));
 
   // ---------- Feed ----------
+  let pendingPostImage = null;
+  let postEditingId = null;
+
+  $('postAttachBtn').addEventListener('click', () => $('postImageInput').click());
+  $('postImageInput').addEventListener('change', async () => {
+    const file = $('postImageInput').files[0];
+    $('postNotice').classList.add('hidden');
+    if (!file) return;
+    try{
+      pendingPostImage = await compressImage(file, 800, 0.75);
+      $('postImagePreview').src = pendingPostImage;
+      $('postImagePreviewWrap').classList.remove('hidden');
+    }catch(err){
+      $('postNotice').textContent = 'تعذّر تحميل الصورة، جرّب صورة أخرى.';
+      $('postNotice').classList.remove('hidden');
+    }finally{
+      $('postImageInput').value = '';
+    }
+  });
+  $('postImageRemoveBtn').addEventListener('click', () => {
+    pendingPostImage = null;
+    $('postImagePreviewWrap').classList.add('hidden');
+    $('postImagePreview').src = '';
+  });
+
   $('postBtn').addEventListener('click', async () => {
     const text = $('postText').value.trim();
-    if (!text || !currentUser) return;
+    const photo = pendingPostImage;
+    if ((!text && !photo) || !currentUser) return;
     $('postBtn').disabled = true;
     try{
-      await addDoc(postsCol, {
-        author: currentUser.displayName, uid: currentUser.uid, text, mood: selectedMood, ts: serverTimestamp()
-      });
+      const payload = { author: currentUser.displayName, uid: currentUser.uid, text, mood: selectedMood, ts: serverTimestamp() };
+      if (photo) payload.photo = photo;
+      await addDoc(postsCol, payload);
       $('postText').value = '';
+      pendingPostImage = null;
+      $('postImagePreviewWrap').classList.add('hidden');
+      $('postImagePreview').src = '';
       $('postNotice').classList.add('hidden');
     }catch(err){
       $('postNotice').textContent = 'تعذّر نشر منشورك الآن، تحقق من اتصالك وحاول مرة أخرى.';
@@ -627,16 +664,67 @@
     }
   });
 
-  function postRowHtml(p, allowDelete){
+  function postRowHtml(p, isMine){
+    const editedTag = p.edited ? `<span class="ts" style="margin-inline-start:0.3rem">(معدّلة)</span>` : '';
+    if (postEditingId === p.id){
+      return `
+        <div class="post" data-id="${p.id}">
+          <div class="post-head">
+            <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
+            <span class="ts">${timeAgo(p.tsMillis)}</span>
+          </div>
+          ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
+          <textarea class="post-edit-input" data-id="${p.id}" rows="3" style="margin-top:0.4rem">${escapeHtml(p.text || '')}</textarea>
+          <div class="row" style="margin-top:0.4rem">
+            <button class="btn small post-save-btn" data-id="${p.id}">حفظ</button>
+            <button class="btn ghost small post-cancel-btn" data-id="${p.id}">إلغاء</button>
+          </div>
+        </div>`;
+    }
     return `
-      <div class="post">
+      <div class="post" data-id="${p.id}">
         <div class="post-head">
           <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
-          <span class="ts">${timeAgo(p.tsMillis)}</span>
+          <span class="ts">${timeAgo(p.tsMillis)}${editedTag}</span>
         </div>
-        <div>${escapeHtml(p.text)}</div>
-        ${allowDelete ? `<div style="margin-top:0.4rem"><button class="del" data-id="${p.id}">حذف</button></div>` : ''}
+        ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
+        ${p.text ? `<div>${escapeHtml(p.text)}</div>` : ''}
+        ${isMine ? `<div style="margin-top:0.4rem"><button class="del post-edit-btn" data-id="${p.id}">تعديل</button><button class="del" data-id="${p.id}">حذف</button></div>` : ''}
       </div>`;
+  }
+
+  function wirePostListEvents(list){
+    list.querySelectorAll('.del:not(.post-edit-btn)').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }
+        catch(e){
+          console.error('post delete failed:', e);
+          $('postNotice').textContent = 'تعذّر حذف المنشور (' + (e.code || e.message || 'خطأ') + ')';
+          $('postNotice').classList.remove('hidden');
+        }
+      });
+    });
+    list.querySelectorAll('.post-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => { postEditingId = btn.dataset.id; renderPosts(); renderMyPosts(); });
+    });
+    list.querySelectorAll('.post-cancel-btn').forEach(btn => {
+      btn.addEventListener('click', () => { postEditingId = null; renderPosts(); renderMyPosts(); });
+    });
+    list.querySelectorAll('.post-save-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const input = list.querySelector(`.post-edit-input[data-id="${id}"]`);
+        const newText = input ? input.value.trim() : '';
+        try{
+          await updateDoc(doc(db, 'posts', id), { text: newText, edited: true, editedTs: serverTimestamp() });
+          postEditingId = null;
+        }catch(e){
+          console.error('post edit failed:', e);
+          $('postNotice').textContent = 'تعذّر حفظ التعديل (' + (e.code || e.message || 'خطأ') + ')';
+          $('postNotice').classList.remove('hidden');
+        }
+      });
+    });
   }
 
   function renderPosts(){
@@ -645,9 +733,7 @@
       list.innerHTML = '<p class="empty">لا توجد منشورات بعد — كن أول من يشارك.</p>';
     } else {
       list.innerHTML = postsCache.map(p => postRowHtml(p, currentUser && p.uid === currentUser.uid)).join('');
-      list.querySelectorAll('.del').forEach(btn => {
-        btn.addEventListener('click', async () => { try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }catch(e){} });
-      });
+      wirePostListEvents(list);
     }
     twemojify(list);
   }
@@ -659,9 +745,7 @@
       list.innerHTML = '<p class="empty">لا توجد منشورات بعد.</p>';
     } else {
       list.innerHTML = mine.map(p => postRowHtml(p, true)).join('');
-      list.querySelectorAll('.del').forEach(btn => {
-        btn.addEventListener('click', async () => { try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }catch(e){} });
-      });
+      wirePostListEvents(list);
     }
     twemojify(list);
   }
@@ -714,7 +798,12 @@
 
       list.querySelectorAll('.chat-del-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          try{ await deleteDoc(doc(db, 'messages', btn.dataset.id)); }catch(e){}
+          try{ await deleteDoc(doc(db, 'messages', btn.dataset.id)); }
+          catch(e){
+            console.error('chat delete failed:', e);
+            $('chatNotice').textContent = 'تعذّر حذف الرسالة (' + (e.code || e.message || 'خطأ') + ')';
+            $('chatNotice').classList.remove('hidden');
+          }
         });
       });
       list.querySelectorAll('.chat-edit-btn').forEach(btn => {
@@ -732,7 +821,8 @@
             await updateDoc(doc(db, 'messages', id), { text: newText, edited: true, editedTs: serverTimestamp() });
             chatEditingId = null;
           }catch(e){
-            $('chatNotice').textContent = 'تعذّر حفظ التعديل، حاول مرة أخرى.';
+            console.error('chat edit failed:', e);
+            $('chatNotice').textContent = 'تعذّر حفظ التعديل (' + (e.code || e.message || 'خطأ') + ')';
             $('chatNotice').classList.remove('hidden');
           }
         });
