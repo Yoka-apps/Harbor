@@ -126,8 +126,10 @@
   .who{ display:flex; align-items:center; gap:0.45rem; }
   .author{ font-weight: 700; font-family:'Cairo'; }
   .ts{ color: var(--text-dim); font-size: 0.85rem; }
-  .del{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:0.85rem; text-decoration: underline; padding:0; font-family:'Cairo'; }
+  .del{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:0.85rem; text-decoration: underline; padding:0; font-family:'Cairo'; margin-inline-end: 0.9rem; }
   .del:hover{ color: var(--danger); }
+  .chat-photo{ max-width: 100%; max-height: 260px; border-radius: 10px; margin: 0.4rem 0; display:block; }
+  #chatImagePreviewWrap{ display:flex; align-items:center; gap:0.6rem; }
   .empty{ text-align:center; color: var(--text-dim); padding: 1.5rem 0; }
   .post-mood{ font-size: 1.1rem; }
 
@@ -290,10 +292,17 @@
     <div id="tabChat" class="hidden">
       <div class="card">
         <div id="chatList"><p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p></div>
+        <div id="chatImagePreviewWrap" class="hidden" style="margin-bottom:0.6rem">
+          <img id="chatImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
+          <button class="del" id="chatImageRemoveBtn" type="button">إزالة الصورة</button>
+        </div>
         <div class="row">
           <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
+          <input type="file" id="chatImageInput" accept="image/*" class="hidden">
+          <button class="btn ghost small" id="chatAttachBtn" type="button" title="إرفاق صورة">📷</button>
           <button class="btn" id="chatSendBtn">إرسال</button>
         </div>
+        <div id="chatNotice" class="notice hidden" style="margin-top:0.6rem"></div>
       </div>
     </div>
 
@@ -368,7 +377,7 @@
     onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   import {
-    getFirestore, collection, addDoc, deleteDoc, doc, setDoc, onSnapshot,
+    getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot,
     query, orderBy, limit, limitToLast, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
@@ -657,35 +666,131 @@
     twemojify(list);
   }
 
+  let chatEditingId = null;
+  let pendingChatImage = null; // compressed data URL waiting to be sent
+
+  function chatRowHtml(m, isMine){
+    const editedTag = m.edited ? `<span class="ts" style="margin-inline-start:0.3rem">(معدّلة)</span>` : '';
+    if (chatEditingId === m.id){
+      return `
+        <div class="msg" data-id="${m.id}">
+          <div class="msg-head">
+            <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author">${escapeHtml(m.user)}</span></span>
+            <span class="ts">${timeAgo(m.tsMillis)}</span>
+          </div>
+          ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
+          <div class="row" style="margin-top:0.4rem">
+            <input type="text" class="chat-edit-input" data-id="${m.id}" value="${escapeHtml(m.text || '')}" style="flex:1; margin-bottom:0;">
+          </div>
+          <div class="row" style="margin-top:0.4rem">
+            <button class="btn small chat-save-btn" data-id="${m.id}">حفظ</button>
+            <button class="btn ghost small chat-cancel-btn" data-id="${m.id}">إلغاء</button>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="msg" data-id="${m.id}">
+        <div class="msg-head">
+          <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author">${escapeHtml(m.user)}</span></span>
+          <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
+        </div>
+        ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
+        ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
+        ${isMine ? `
+          <div class="row" style="margin-top:0.3rem">
+            <button class="del chat-edit-btn" data-id="${m.id}">تعديل</button>
+            <button class="del chat-del-btn" data-id="${m.id}">حذف</button>
+          </div>` : ''}
+      </div>`;
+  }
+
   function renderChat(){
     const list = $('chatList');
     if (!chatCache.length){
       list.innerHTML = '<p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p>';
     } else {
-      list.innerHTML = chatCache.map(m => `
-        <div class="msg">
-          <div class="msg-head">
-            <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author">${escapeHtml(m.user)}</span></span>
-            <span class="ts">${timeAgo(m.tsMillis)}</span>
-          </div>
-          <div>${escapeHtml(m.text)}</div>
-        </div>
-      `).join('');
+      list.innerHTML = chatCache.map(m => chatRowHtml(m, !!(currentUser && m.uid === currentUser.uid))).join('');
       list.scrollTop = list.scrollHeight;
+
+      list.querySelectorAll('.chat-del-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try{ await deleteDoc(doc(db, 'messages', btn.dataset.id)); }catch(e){}
+        });
+      });
+      list.querySelectorAll('.chat-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => { chatEditingId = btn.dataset.id; renderChat(); });
+      });
+      list.querySelectorAll('.chat-cancel-btn').forEach(btn => {
+        btn.addEventListener('click', () => { chatEditingId = null; renderChat(); });
+      });
+      list.querySelectorAll('.chat-save-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const input = list.querySelector(`.chat-edit-input[data-id="${id}"]`);
+          const newText = input ? input.value.trim() : '';
+          try{
+            await updateDoc(doc(db, 'messages', id), { text: newText, edited: true, editedTs: serverTimestamp() });
+            chatEditingId = null;
+          }catch(e){
+            $('chatNotice').textContent = 'تعذّر حفظ التعديل، حاول مرة أخرى.';
+            $('chatNotice').classList.remove('hidden');
+          }
+        });
+      });
+      list.querySelectorAll('.chat-edit-input').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') list.querySelector(`.chat-save-btn[data-id="${input.dataset.id}"]`).click();
+          if (e.key === 'Escape') list.querySelector(`.chat-cancel-btn[data-id="${input.dataset.id}"]`).click();
+        });
+      });
     }
     twemojify(list);
   }
 
   $('chatSendBtn').addEventListener('click', sendChat);
   $('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+  $('chatAttachBtn').addEventListener('click', () => $('chatImageInput').click());
+  $('chatImageInput').addEventListener('change', async () => {
+    const file = $('chatImageInput').files[0];
+    $('chatNotice').classList.add('hidden');
+    if (!file) return;
+    try{
+      pendingChatImage = await compressImage(file, 640, 0.75);
+      $('chatImagePreview').src = pendingChatImage;
+      $('chatImagePreviewWrap').classList.remove('hidden');
+    }catch(err){
+      $('chatNotice').textContent = 'تعذّر تحميل الصورة، جرّب صورة أخرى.';
+      $('chatNotice').classList.remove('hidden');
+    }finally{
+      $('chatImageInput').value = '';
+    }
+  });
+  $('chatImageRemoveBtn').addEventListener('click', () => {
+    pendingChatImage = null;
+    $('chatImagePreviewWrap').classList.add('hidden');
+    $('chatImagePreview').src = '';
+  });
+
   async function sendChat(){
     const text = $('chatInput').value.trim();
-    if (!text || !currentUser) return;
-    $('chatInput').value = '';
+    const photo = pendingChatImage;
+    if ((!text && !photo) || !currentUser) return;
+    $('chatSendBtn').disabled = true;
     try{
-      await addDoc(chatCol, { user: currentUser.displayName, uid: currentUser.uid, text, ts: serverTimestamp() });
+      const payload = { user: currentUser.displayName, uid: currentUser.uid, text, ts: serverTimestamp() };
+      if (photo) payload.photo = photo;
+      await addDoc(chatCol, payload);
+      $('chatInput').value = '';
+      pendingChatImage = null;
+      $('chatImagePreviewWrap').classList.add('hidden');
+      $('chatImagePreview').src = '';
+      $('chatNotice').classList.add('hidden');
     }catch(err){
-      $('appStatus').textContent = 'تعذّر إرسال الرسالة، تحقق من اتصالك.';
+      $('chatNotice').textContent = 'تعذّر إرسال الرسالة، تحقق من اتصالك.';
+      $('chatNotice').classList.remove('hidden');
+    }finally{
+      $('chatSendBtn').disabled = false;
     }
   }
 
