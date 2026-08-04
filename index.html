@@ -1309,6 +1309,7 @@
     $('chatImagePreviewWrap').classList.add('hidden');
     $('chatNotice').classList.add('hidden');
     chatEditingId = null;
+    $('chatList').innerHTML = '<p class="empty">جارٍ تحميل المحادثة…</p>';
   }
 
   function openGroupThread(){
@@ -1324,14 +1325,28 @@
     }, () => { $('chatNotice').textContent = 'تعذّر تحميل الدردشة.'; $('chatNotice').classList.remove('hidden'); });
   }
 
-  function openDmThread(otherUid){
+  async function openDmThread(otherUid){
     const prof = profilesCache[otherUid] || {};
-    activeConversation = { type: 'dm', id: convoIdFor(currentUser.uid, otherUid), otherUid, otherName: prof.displayName || 'صديق', otherPhoto: prof.photo || '' };
+    const convoId = convoIdFor(currentUser.uid, otherUid);
+    activeConversation = { type: 'dm', id: convoId, otherUid, otherName: prof.displayName || 'صديق', otherPhoto: prof.photo || '' };
     openThreadCommon();
     $('threadTitle').textContent = activeConversation.otherName;
     setAvatarVisual($('threadAvatar'), activeConversation.otherPhoto, activeConversation.otherName);
     unsubscribeThread && unsubscribeThread();
-    const q = query(collection(db, 'dms', activeConversation.id, 'messages'), orderBy('ts', 'asc'), limitToLast(200));
+
+    // Make sure the conversation document exists BEFORE we start listening, so the
+    // security rules (which check this parent doc) always have something to check —
+    // otherwise the very first open of a brand-new conversation fails to read.
+    try{
+      await setDoc(doc(db, 'dms', convoId), { participants: [currentUser.uid, otherUid] }, { merge: true });
+    }catch(e){
+      $('chatNotice').textContent = 'تعذّر فتح المحادثة، تحقق من قواعد Firestore.';
+      $('chatNotice').classList.remove('hidden');
+      return;
+    }
+    if (!activeConversation || activeConversation.id !== convoId) return; // user navigated away while we awaited
+
+    const q = query(collection(db, 'dms', convoId, 'messages'), orderBy('ts', 'asc'), limitToLast(200));
     unsubscribeThread = onSnapshot(q, (snap) => {
       chatCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
       renderChat();
