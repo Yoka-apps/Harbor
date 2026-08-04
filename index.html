@@ -256,6 +256,19 @@
   .profile-post-row:first-child{ border-top:none; }
   .profile-post-thumb{ width:3.4rem; height:3.4rem; border-radius:50%; background: var(--card-hi); flex-shrink:0; overflow:hidden; background-size:cover; background-position:center; }
   .profile-post-text{ flex:1; text-align:end; color:var(--text); }
+
+  .compose-trigger{
+    display:flex; align-items:center; gap:0.7rem; width:100%; background: rgba(0,0,0,0.22);
+    border:1px solid var(--line); border-radius:999px; padding:0.7rem 1rem; cursor:pointer;
+    color:var(--text-dim); font-family:'Cairo'; font-size:1rem; text-align:start;
+  }
+  .compose-trigger:hover{ background: var(--card-hi); }
+  .compose-trigger-avatar{
+    width:2.2rem; height:2.2rem; border-radius:50%; background-color: var(--accent); color:#1A1120;
+    display:flex; align-items:center; justify-content:center; font-weight:700; overflow:hidden;
+    background-size:cover; background-position:center; flex-shrink:0; font-size:0.85rem;
+  }
+  .compose-trigger-text{ flex:1; }
 </style>
 </head>
 <body data-theme="purple">
@@ -275,12 +288,12 @@
       <span class="brand">الميناء</span>
     </div>
 
-    <div class="presence-row">
+    <div class="presence-row hidden" id="presenceRow">
       <div class="online-list" id="onlineList"></div>
       <button type="button" class="arrow-btn" id="onlineMoreBtn" aria-label="عرض كل المتصلين">▶</button>
     </div>
 
-    <div class="left-col">
+    <div class="left-col hidden" id="leftCol">
       <button type="button" class="profile-circle-lg" id="avatarBtn" aria-label="ملفك الشخصي"></button>
       <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="القائمة" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -347,26 +360,10 @@
 
     <div id="tabFeed">
       <div class="card">
-        <label for="postText">شارك شيئًا مع الميناء</label>
-        <div class="moods" role="group" aria-label="المزاج">
-          <button type="button" class="mood-opt" data-mood="" aria-pressed="true" title="بدون">—</button>
-          <button type="button" class="mood-opt" data-mood="😊" aria-pressed="false" title="سعيد">😊</button>
-          <button type="button" class="mood-opt" data-mood="😢" aria-pressed="false" title="حزين">😢</button>
-          <button type="button" class="mood-opt" data-mood="😴" aria-pressed="false" title="متعب">😴</button>
-          <button type="button" class="mood-opt" data-mood="🥳" aria-pressed="false" title="مبتهج">🥳</button>
-          <button type="button" class="mood-opt" data-mood="😡" aria-pressed="false" title="منزعج">😡</button>
-        </div>
-        <textarea id="postText" rows="3" placeholder="بماذا تفكر؟"></textarea>
-        <div id="postImagePreviewWrap" class="hidden" style="margin:0.5rem 0; display:flex; align-items:center; gap:0.6rem;">
-          <img id="postImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
-          <button class="del" id="postImageRemoveBtn" type="button">إزالة الصورة</button>
-        </div>
-        <div class="row">
-          <input type="file" id="postImageInput" accept="image/*" class="hidden">
-          <button class="btn ghost small" id="postAttachBtn" type="button" title="إرفاق صورة">📷 صورة</button>
-          <button class="btn" id="postBtn">نشر</button>
-        </div>
-        <div id="postNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+        <button type="button" class="compose-trigger" id="composeTriggerBtn">
+          <span class="compose-trigger-avatar" id="composeTriggerAvatar">?</span>
+          <span class="compose-trigger-text">بم تفكر؟</span>
+        </button>
       </div>
       <div class="card fancy-card" id="postsCard">
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
@@ -436,6 +433,35 @@
       </div>
     </div>
     <p class="status" id="appStatus"></p>
+  </div>
+
+  <!-- COMPOSE POST MODAL -->
+  <div id="composeModal" class="modal-overlay hidden">
+    <div class="card modal-card">
+      <div class="row between">
+        <h2 style="margin:0">منشور جديد</h2>
+        <button class="btn ghost small" id="closeCompose">✕</button>
+      </div>
+      <div class="moods" role="group" aria-label="المزاج">
+        <button type="button" class="mood-opt" data-mood="" aria-pressed="true" title="بدون">—</button>
+        <button type="button" class="mood-opt" data-mood="😊" aria-pressed="false" title="سعيد">😊</button>
+        <button type="button" class="mood-opt" data-mood="😢" aria-pressed="false" title="حزين">😢</button>
+        <button type="button" class="mood-opt" data-mood="😴" aria-pressed="false" title="متعب">😴</button>
+        <button type="button" class="mood-opt" data-mood="🥳" aria-pressed="false" title="مبتهج">🥳</button>
+        <button type="button" class="mood-opt" data-mood="😡" aria-pressed="false" title="منزعج">😡</button>
+      </div>
+      <textarea id="postText" rows="3" placeholder="بماذا تفكر؟"></textarea>
+      <div id="postImagePreviewWrap" class="hidden" style="margin:0.5rem 0; display:flex; align-items:center; gap:0.6rem;">
+        <img id="postImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
+        <button class="del" id="postImageRemoveBtn" type="button">إزالة الصورة</button>
+      </div>
+      <div class="row">
+        <input type="file" id="postImageInput" accept="image/*" class="hidden">
+        <button class="btn ghost small" id="postAttachBtn" type="button" title="إرفاق صورة">📷 صورة</button>
+        <button class="btn" id="postBtn">نشر</button>
+      </div>
+      <div id="postNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+    </div>
   </div>
 
   <!-- ONLINE PEOPLE MODAL -->
@@ -765,6 +791,9 @@
       $('appScreen').classList.add('hidden');
       $('authScreen').classList.remove('hidden');
       $('profileModal').classList.add('hidden');
+      $('presenceRow').classList.add('hidden');
+      $('leftCol').classList.add('hidden');
+      $('sideNav').classList.add('hidden');
     }
   });
 
@@ -814,6 +843,12 @@
   let pendingPostImage = null;
   let postEditingId = null;
 
+  $('composeTriggerBtn').addEventListener('click', () => {
+    $('composeModal').classList.remove('hidden');
+    $('postText').focus();
+  });
+  $('closeCompose').addEventListener('click', () => $('composeModal').classList.add('hidden'));
+
   $('postAttachBtn').addEventListener('click', () => $('postImageInput').click());
   $('postImageInput').addEventListener('change', async () => {
     const file = $('postImageInput').files[0];
@@ -850,6 +885,7 @@
       $('postImagePreviewWrap').classList.add('hidden');
       $('postImagePreview').src = '';
       $('postNotice').classList.add('hidden');
+      $('composeModal').classList.add('hidden');
     }catch(err){
       $('postNotice').textContent = 'تعذّر نشر منشورك الآن، تحقق من اتصالك وحاول مرة أخرى.';
       $('postNotice').classList.remove('hidden');
@@ -1206,6 +1242,7 @@
       myProfile.photo = dataUrl;
       setAvatarVisual($('avatarBig'), dataUrl, myProfile.displayName);
       setAvatarVisual($('avatarBtn'), dataUrl, myProfile.displayName);
+      setAvatarVisual($('composeTriggerAvatar'), dataUrl, myProfile.displayName);
       await setDoc(doc(db, 'profiles', currentUser.uid), { photo: dataUrl }, { merge: true });
       $('profileStatus').textContent = 'تم تحديث صورتك.';
     }catch(e){
@@ -1231,6 +1268,7 @@
       myProfile.bio = newBio;
       $('whoami').textContent = 'مسجّل الدخول باسم ' + newName;
       setAvatarVisual($('avatarBtn'), myProfile.photo, newName);
+      setAvatarVisual($('composeTriggerAvatar'), myProfile.photo, newName);
       $('profileStatus').textContent = 'تم الحفظ.';
     }catch(e){
       $('profileError').textContent = 'تعذّر الحفظ الآن، حاول مرة أخرى.';
@@ -1242,8 +1280,11 @@
   function showApp(){
     $('authScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
+    $('presenceRow').classList.remove('hidden');
+    $('leftCol').classList.remove('hidden');
     $('whoami').textContent = 'مسجّل الدخول باسم ' + currentUser.displayName;
     setAvatarVisual($('avatarBtn'), '', currentUser.displayName);
+    setAvatarVisual($('composeTriggerAvatar'), '', currentUser.displayName);
 
     unsubscribeMyProfile && unsubscribeMyProfile();
     unsubscribeMyProfile = onSnapshot(doc(db, 'profiles', currentUser.uid), (snap) => {
@@ -1253,6 +1294,7 @@
         currentUser.displayName = myProfile.displayName;
         $('whoami').textContent = 'مسجّل الدخول باسم ' + myProfile.displayName;
         setAvatarVisual($('avatarBtn'), myProfile.photo, myProfile.displayName);
+        setAvatarVisual($('composeTriggerAvatar'), myProfile.photo, myProfile.displayName);
       }
     });
 
