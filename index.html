@@ -70,23 +70,6 @@
   [data-theme="blue"] .switch .knob{ left: calc(100% - 1.7rem); }
 
   .card{ background: var(--card); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 16px; padding: 1.1rem; margin-bottom: 1rem; }
-
-  .welcome-hero{ text-align:center; padding: 1.5rem 1rem 1.6rem; }
-  .welcome-hero .moon{
-    width: 40px; height: 40px; display:block; margin: 0 auto 0.7rem;
-    filter: drop-shadow(0 0 14px rgba(255,217,176,0.65));
-    animation: moonGlow 3.2s ease-in-out infinite;
-  }
-  @keyframes moonGlow{ 0%,100%{ filter: drop-shadow(0 0 10px rgba(255,217,176,0.5)); } 50%{ filter: drop-shadow(0 0 20px rgba(255,217,176,0.85)); } }
-  .welcome-hero .tagline{
-    font-family: 'Rakkas', 'Cairo', serif; font-weight: 400; margin: 0;
-    font-size: clamp(1.5rem, 5vw, 2.05rem); line-height: 1.55; color: var(--accent-strong);
-    text-shadow: 0 0 22px rgba(255,217,176,0.5), 0 2px 12px rgba(0,0,0,0.4);
-  }
-  @media (prefers-reduced-motion: reduce){ .welcome-hero .moon{ animation:none; } }
-
-  .card.composer{ border-top: 3px solid var(--accent); }
-  .card.composer > label:first-of-type{ color: var(--accent-strong); font-weight: 700; }
   label{ display:block; margin-bottom: 0.3rem; color: var(--text-dim); font-size: 0.95rem; }
   input[type=text], textarea{
     width:100%; background: rgba(0,0,0,0.22); border: 1px solid var(--line); color: var(--text);
@@ -117,13 +100,12 @@
 
   .profile-group{ display:flex; align-items:center; gap:0.6rem; }
   .avatar-btn{
-    width: 3.1rem; height: 3.1rem; border-radius: 50%; border: 2px solid var(--accent-strong);
+    width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 2px solid var(--accent);
     background-color: var(--accent); color: #1A1120; display:flex; align-items:center; justify-content:center;
     cursor:pointer; background-size:cover; background-position:center; font-weight:700; overflow:hidden; padding:0; flex-shrink:0;
-    box-shadow: 0 0 0 3px var(--card), 0 0 12px rgba(255,217,176,0.45);
   }
-  .avatar-big{ width: 6rem; height: 6rem; font-size: 2rem; box-shadow: 0 0 0 4px var(--card), 0 0 22px rgba(255,217,176,0.55); }
-  .avatar-tiny{ width: 2.05rem; height: 2.05rem; font-size: 0.9rem; border-width: 2px; box-shadow: 0 0 0 2px var(--card), 0 0 8px rgba(255,217,176,0.4); }
+  .avatar-big{ width: 5.5rem; height: 5.5rem; font-size: 1.8rem; }
+  .avatar-tiny{ width: 1.7rem; height: 1.7rem; font-size: 0.8rem; border-width: 1px; }
 
   .moods{ display:flex; gap: 0.45rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
   .mood-opt{
@@ -199,12 +181,56 @@
   }
   .book-nav{ display:flex; justify-content:space-between; align-items:center; margin-top: 1rem; }
   .page-indicator{ color: var(--text-dim); font-size: 0.9rem; }
+
+  /* ---- New header: brand / online people / profile+menu ---- */
+  .topbar2{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; padding: 1rem 0 1.4rem; flex-wrap:wrap; position:relative; }
+  .left-col{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; position:relative; }
+  .profile-circle-lg{
+    width:4.4rem; height:4.4rem; border-radius:50%; border:2px solid var(--text);
+    background-color: rgba(0,0,0,0.35); color:var(--text); display:flex; align-items:center; justify-content:center;
+    text-align:center; font-size:0.72rem; line-height:1.25; cursor:pointer; overflow:hidden;
+    background-size:cover; background-position:center; flex-shrink:0; font-family:'Cairo'; padding:0.3rem;
+  }
+  .hamburger-btn{
+    width:2.4rem; height:2.4rem; border-radius:50%; background: var(--card); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border:1px solid var(--line); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .hamburger-btn svg{ width:18px; height:18px; }
+  .side-nav{
+    position:absolute; top:2.9rem; left:50%; transform: translateX(-50%); display:flex; flex-direction:column; gap:0.55rem;
+    background: var(--card); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border:1px solid var(--line);
+    border-radius:999px; padding:0.6rem 0.5rem; z-index:30;
+  }
+  .side-nav-btn{
+    width:2.3rem; height:2.3rem; border-radius:50%; border:1px solid var(--line); background: rgba(0,0,0,0.25);
+    color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  .side-nav-btn svg{ width:18px; height:18px; }
+  .side-nav-btn.active{ background: var(--accent); color:#1A1120; border-color: var(--accent); }
+
+  .presence-row{ display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; padding-top:0.3rem; }
+  .online-list{ display:flex; gap:0.55rem; flex-wrap:wrap; }
+  .online-item{ display:flex; flex-direction:column; align-items:center; gap:0.25rem; width:3.2rem; }
+  .online-avatar-wrap{ position:relative; width:2.8rem; height:2.8rem; }
+  .online-avatar{
+    width:100%; height:100%; border-radius:50%; border:2px solid var(--text); background-color:var(--accent);
+    color:#1A1120; display:flex; align-items:center; justify-content:center; font-weight:700; overflow:hidden;
+    background-size:cover; background-position:center; font-size:0.85rem;
+  }
+  .online-star{
+    position:absolute; bottom:-3px; inset-inline-end:-3px; width:13px; height:13px; background-color:#3ED67A;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 0C13 7 17 11 24 12C17 13 13 17 12 24C11 17 7 13 0 12C7 11 11 7 12 0Z'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 0C13 7 17 11 24 12C17 13 13 17 12 24C11 17 7 13 0 12C7 11 11 7 12 0Z'/></svg>");
+    -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  }
+  .online-name{ font-size:0.7rem; color:var(--text-dim); max-width:3.2rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .arrow-btn{ background:none; border:none; color:var(--text); font-size:1rem; cursor:pointer; padding:0.3rem; }
 </style>
 </head>
 <body data-theme="purple">
 <div class="wrap">
 
-  <header class="topbar">
+  <header class="topbar2">
     <div class="brand-row">
       <div class="beam-wrap" aria-hidden="true">
         <svg class="lighthouse" viewBox="0 0 34 34">
@@ -217,28 +243,38 @@
       </div>
       <span class="brand">الميناء</span>
     </div>
-    <div class="controls">
-      <div class="textsize" role="group" aria-label="حجم الخط">
-        <button type="button" id="fontDown" aria-label="تصغير الخط">أ−</button>
-        <button type="button" id="fontUp" aria-label="تكبير الخط">أ+</button>
-      </div>
-      <div class="theme-switch">
-        <button type="button" class="switch" id="themeToggle" role="switch" aria-checked="false" aria-label="التبديل إلى السماء الزرقاء">
-          <span class="knob"></span>
+
+    <div class="presence-row">
+      <div class="online-list" id="onlineList"></div>
+      <button type="button" class="arrow-btn" id="onlineMoreBtn" aria-label="عرض كل المتصلين">▶</button>
+    </div>
+
+    <div class="left-col">
+      <button type="button" class="profile-circle-lg" id="avatarBtn" aria-label="ملفك الشخصي"></button>
+      <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="القائمة" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="side-nav hidden" id="sideNav" aria-label="التنقل">
+        <button type="button" class="side-nav-btn" data-tab="album" title="الألبوم" aria-label="الألبوم">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5c2-1 5-1 7 0v14c-2-1-5-1-7 0V5Z"/><path d="M20 5c-2-1-5-1-7 0v14c2-1 5-1 7 0V5Z"/></svg>
         </button>
-      </div>
+        <button type="button" class="side-nav-btn" data-tab="search" title="بحث" aria-label="بحث">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg>
+        </button>
+        <button type="button" class="side-nav-btn" data-tab="chat" title="الدردشة" aria-label="الدردشة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 3 3 10.5l7 2.5 2 7L21 3Z"/><path d="M10 13l4-4"/></svg>
+        </button>
+        <button type="button" class="side-nav-btn" data-tab="feed" title="الرئيسية" aria-label="الرئيسية">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></svg>
+        </button>
+      </nav>
     </div>
   </header>
 
   <!-- AUTH SCREEN -->
   <div id="authScreen">
-    <div class="welcome-hero">
-      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.5 14.5c-4.8 1.7-9.9-1.8-9.9-6.9 0-2.1.8-4 2.1-5.4C7.9 3 4.5 6.9 4.5 11.5 4.5 16.9 8.9 21 14 21c3.6 0 6.7-2.1 8.2-5.1-.5.3-1.1.5-1.7.6z" fill="var(--accent-strong)"/>
-      </svg>
-      <p class="tagline">مرفأٌ آمن لأقرب الناس إلى قلبك</p>
-    </div>
-    <div class="card">
+    <div class="card fancy-card">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
       <h2 id="authTitle" style="margin-top:0">مرحبًا بك في الميناء</h2>
       <p class="muted" style="margin-top:-0.4rem">مكان صغير وهادئ للنشر والدردشة مع أقرب أصدقائك.</p>
 
@@ -277,22 +313,9 @@
 
   <!-- APP SCREEN -->
   <div id="appScreen" class="hidden">
-    <div class="card row between">
-      <div class="profile-group">
-        <button type="button" class="avatar-btn" id="avatarBtn" aria-label="ملفك الشخصي">?</button>
-        <span>تم تسجيل الدخول باسم <strong id="whoami"></strong></span>
-      </div>
-      <button class="btn ghost small" id="logoutBtn">تسجيل الخروج</button>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" id="tabFeedBtn">المنشورات</div>
-      <div class="tab" id="tabChatBtn">الدردشة</div>
-      <div class="tab" id="tabAlbumBtn">الألبوم</div>
-    </div>
 
     <div id="tabFeed">
-      <div class="card composer">
+      <div class="card">
         <label for="postText">شارك شيئًا مع الميناء</label>
         <div class="moods" role="group" aria-label="المزاج">
           <button type="button" class="mood-opt" data-mood="" aria-pressed="true" title="بدون">—</button>
@@ -321,7 +344,7 @@
     </div>
 
     <div id="tabChat" class="hidden">
-      <div class="card composer">
+      <div class="card">
         <div id="chatList"><p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p></div>
         <div id="chatImagePreviewWrap" class="hidden" style="margin-bottom:0.6rem">
           <img id="chatImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
@@ -338,7 +361,7 @@
     </div>
 
     <div id="tabAlbum" class="hidden">
-      <div class="card composer">
+      <div class="card">
         <label for="albumPhotoInput">أضف صورة إلى الألبوم</label>
         <input type="file" id="albumPhotoInput" accept="image/*" style="margin-bottom:0.85rem;">
         <label for="albumCaption">صف هذه الصورة</label>
@@ -370,7 +393,29 @@
         </div>
       </div>
     </div>
+
+    <div id="tabSearch" class="hidden">
+      <div class="card">
+        <label for="searchInput">ابحث في المنشورات</label>
+        <input type="text" id="searchInput" placeholder="اكتب كلمة أو اسم للبحث…">
+      </div>
+      <div class="card fancy-card">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div id="searchResultsList"><p class="empty">ابدأ الكتابة للبحث في المنشورات.</p></div>
+      </div>
+    </div>
     <p class="status" id="appStatus"></p>
+  </div>
+
+  <!-- ONLINE PEOPLE MODAL -->
+  <div id="onlineModal" class="modal-overlay hidden">
+    <div class="card modal-card">
+      <div class="row between">
+        <h2 style="margin:0">المتصلون الآن</h2>
+        <button class="btn ghost small" id="closeOnline">✕</button>
+      </div>
+      <div id="onlineFullList" style="margin-top:0.8rem"></div>
+    </div>
   </div>
 
   <!-- PROFILE MODAL -->
@@ -383,6 +428,7 @@
       <div class="row" style="justify-content:center; margin:0.8rem 0">
         <button type="button" id="avatarBig" class="avatar-btn avatar-big" aria-label="تغيير الصورة">?</button>
       </div>
+      <p class="muted" id="whoami" style="text-align:center"></p>
       <div class="row" style="justify-content:center; margin-bottom:1rem">
         <button class="btn ghost small" id="changePhotoBtn">تغيير الصورة</button>
         <input type="file" id="photoInput" accept="image/*" class="hidden">
@@ -394,6 +440,22 @@
         <button class="btn" id="saveProfileBtn">حفظ</button>
       </div>
       <p class="status" id="profileStatus"></p>
+
+      <h3 style="margin-top:1.4rem">الإعدادات</h3>
+      <div class="row" style="gap:1rem">
+        <div class="textsize" role="group" aria-label="حجم الخط">
+          <button type="button" id="fontDown" aria-label="تصغير الخط">أ−</button>
+          <button type="button" id="fontUp" aria-label="تكبير الخط">أ+</button>
+        </div>
+        <div class="theme-switch">
+          <button type="button" class="switch" id="themeToggle" role="switch" aria-checked="false" aria-label="التبديل إلى السماء الزرقاء">
+            <span class="knob"></span>
+          </button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:1rem">
+        <button class="btn ghost small" id="logoutBtn">تسجيل الخروج</button>
+      </div>
       <h3 style="margin-top:1.4rem">منشوراتك</h3>
       <div id="myPostsList"><p class="empty">لا توجد منشورات بعد.</p></div>
     </div>
@@ -473,6 +535,7 @@
 
   function setAvatarVisual(el, photo, name){
     if (photo){ el.style.backgroundImage = `url(${photo})`; el.textContent = ''; }
+    else if (el.id === 'avatarBtn'){ el.style.backgroundImage = ''; el.innerHTML = 'بروفايل<br>شخصي'; }
     else { el.style.backgroundImage = ''; el.textContent = (name || '?').trim().charAt(0).toUpperCase(); }
   }
   function avatarChipHtml(uid, name){
@@ -482,6 +545,42 @@
     const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
     return `<span class="avatar-btn avatar-tiny" style="${style}">${photo ? '' : initial}</span>`;
   }
+
+  const ONLINE_WINDOW_MS = 45000;
+  function isOnline(prof){
+    return !!(prof && prof.lastActive && (Date.now() - prof.lastActive.toMillis()) < ONLINE_WINDOW_MS);
+  }
+  function onlinePeopleList(){
+    return Object.keys(profilesCache)
+      .filter(uid => currentUser && uid !== currentUser.uid && isOnline(profilesCache[uid]))
+      .map(uid => ({ uid, ...profilesCache[uid] }))
+      .sort((a, b) => b.lastActive.toMillis() - a.lastActive.toMillis());
+  }
+  function onlinePersonHtml(p){
+    const photo = p.photo;
+    const initial = (p.displayName || '?').trim().charAt(0).toUpperCase();
+    const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
+    return `
+      <div class="online-item">
+        <div class="online-avatar-wrap">
+          <div class="online-avatar" style="${style}">${photo ? '' : initial}</div>
+          <span class="online-star"></span>
+        </div>
+        <span class="online-name">${escapeHtml(p.displayName || '')}</span>
+      </div>`;
+  }
+  function renderOnlineRow(){
+    const online = onlinePeopleList();
+    $('onlineList').innerHTML = online.slice(0, 3).map(onlinePersonHtml).join('');
+  }
+  $('onlineMoreBtn').addEventListener('click', () => {
+    const online = onlinePeopleList();
+    $('onlineFullList').innerHTML = online.length
+      ? online.map(onlinePersonHtml).join('')
+      : '<p class="empty">لا أحد متصل الآن.</p>';
+    $('onlineModal').classList.remove('hidden');
+  });
+  $('closeOnline').addEventListener('click', () => $('onlineModal').classList.add('hidden'));
 
   function compressImage(file, maxDim, quality){
     return new Promise((resolve, reject) => {
@@ -605,9 +704,11 @@
   $('logoutBtn').addEventListener('click', async () => {
     await signOut(auth);
     $('loginUser').value = ''; $('loginPass').value = ''; $('loginPassOverlay').textContent = '';
+    $('profileModal').classList.add('hidden');
   });
 
   let unsubscribePosts = null, unsubscribeChat = null, unsubscribeProfiles = null, unsubscribeMyProfile = null, unsubscribeAlbum = null;
+  let heartbeatInterval = null, onlineRowInterval = null;
 
   onAuthStateChanged(auth, (user) => {
     if (user){
@@ -620,24 +721,55 @@
       unsubscribeProfiles && unsubscribeProfiles();
       unsubscribeMyProfile && unsubscribeMyProfile();
       unsubscribeAlbum && unsubscribeAlbum();
+      heartbeatInterval && clearInterval(heartbeatInterval);
+      onlineRowInterval && clearInterval(onlineRowInterval);
       $('appScreen').classList.add('hidden');
       $('authScreen').classList.remove('hidden');
       $('profileModal').classList.add('hidden');
     }
   });
 
-  // ---------- Tabs ----------
-  const tabButtons = { feed: $('tabFeedBtn'), chat: $('tabChatBtn'), album: $('tabAlbumBtn') };
-  const tabPanels = { feed: $('tabFeed'), chat: $('tabChat'), album: $('tabAlbum') };
+  // ---------- Navigation (hamburger + side nav) ----------
+  const tabPanels = { feed: $('tabFeed'), chat: $('tabChat'), album: $('tabAlbum'), search: $('tabSearch') };
+  const navButtons = Array.from(document.querySelectorAll('.side-nav-btn'));
   function showTab(name){
-    Object.keys(tabButtons).forEach(k => {
-      tabButtons[k].classList.toggle('active', k === name);
-      tabPanels[k].classList.toggle('hidden', k !== name);
-    });
+    Object.keys(tabPanels).forEach(k => tabPanels[k].classList.toggle('hidden', k !== name));
+    navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
   }
-  $('tabFeedBtn').addEventListener('click', () => showTab('feed'));
-  $('tabChatBtn').addEventListener('click', () => showTab('chat'));
-  $('tabAlbumBtn').addEventListener('click', () => showTab('album'));
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      showTab(btn.dataset.tab);
+      $('sideNav').classList.add('hidden');
+      $('hamburgerBtn').setAttribute('aria-expanded', 'false');
+      if (btn.dataset.tab === 'search') $('searchInput').focus();
+    });
+  });
+  $('hamburgerBtn').addEventListener('click', () => {
+    const willShow = $('sideNav').classList.contains('hidden');
+    $('sideNav').classList.toggle('hidden', !willShow);
+    $('hamburgerBtn').setAttribute('aria-expanded', String(willShow));
+  });
+  showTab('feed');
+
+  // ---------- Search ----------
+  $('searchInput').addEventListener('input', () => {
+    const q = $('searchInput').value.trim().toLowerCase();
+    const list = $('searchResultsList');
+    if (!q){
+      list.innerHTML = '<p class="empty">ابدأ الكتابة للبحث في المنشورات.</p>';
+      return;
+    }
+    const results = postsCache.filter(p =>
+      (p.text || '').toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q)
+    );
+    if (!results.length){
+      list.innerHTML = '<p class="empty">لا توجد نتائج مطابقة.</p>';
+    } else {
+      list.innerHTML = results.map(p => postRowHtml(p, currentUser && p.uid === currentUser.uid)).join('');
+      wirePostRowEvents(list);
+    }
+    twemojify(list);
+  });
 
   // ---------- Feed ----------
   let pendingPostImage = null;
@@ -1026,7 +1158,7 @@
       await setDoc(doc(db, 'profiles', currentUser.uid), { displayName: newName }, { merge: true });
       currentUser.displayName = newName;
       myProfile.displayName = newName;
-      $('whoami').textContent = newName;
+      $('whoami').textContent = 'مسجّل الدخول باسم ' + newName;
       setAvatarVisual($('avatarBtn'), myProfile.photo, newName);
       $('profileStatus').textContent = 'تم الحفظ.';
     }catch(e){
@@ -1039,7 +1171,7 @@
   function showApp(){
     $('authScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
-    $('whoami').textContent = currentUser.displayName;
+    $('whoami').textContent = 'مسجّل الدخول باسم ' + currentUser.displayName;
     setAvatarVisual($('avatarBtn'), '', currentUser.displayName);
 
     unsubscribeMyProfile && unsubscribeMyProfile();
@@ -1048,7 +1180,7 @@
         const d = snap.data();
         myProfile = { displayName: d.displayName || currentUser.displayName, photo: d.photo || '' };
         currentUser.displayName = myProfile.displayName;
-        $('whoami').textContent = myProfile.displayName;
+        $('whoami').textContent = 'مسجّل الدخول باسم ' + myProfile.displayName;
         setAvatarVisual($('avatarBtn'), myProfile.photo, myProfile.displayName);
       }
     });
@@ -1056,8 +1188,17 @@
     unsubscribeProfiles && unsubscribeProfiles();
     unsubscribeProfiles = onSnapshot(profilesCol, (snap) => {
       snap.docs.forEach(d => { profilesCache[d.id] = d.data(); });
-      renderPosts(); renderChat();
+      renderPosts(); renderChat(); renderOnlineRow();
     });
+
+    // Presence: mark ourselves online now, then refresh every 25s while the app is open.
+    updateDoc(doc(db, 'profiles', currentUser.uid), { lastActive: serverTimestamp() }).catch(() => {});
+    heartbeatInterval && clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      updateDoc(doc(db, 'profiles', currentUser.uid), { lastActive: serverTimestamp() }).catch(() => {});
+    }, 25000);
+    onlineRowInterval && clearInterval(onlineRowInterval);
+    onlineRowInterval = setInterval(renderOnlineRow, 15000);
 
     unsubscribePosts && unsubscribePosts();
     const postsQuery = query(postsCol, orderBy('ts', 'desc'), limit(200));
