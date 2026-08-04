@@ -183,8 +183,9 @@
   .page-indicator{ color: var(--text-dim); font-size: 0.9rem; }
 
   /* ---- New header: brand / online people / profile+menu ---- */
-  .topbar2{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; padding: 1rem 0 1.4rem; flex-wrap:wrap; position:relative; }
-  .left-col{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; position:relative; }
+  .topbar2{ display:flex; flex-direction:column; gap:0.6rem; padding: 1rem 0 1.4rem; position:relative; }
+  .topbar-row1{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; }
+  .left-col{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; position:relative; flex-shrink:0; }
   .profile-circle-lg{
     width:4.4rem; height:4.4rem; border-radius:50%; border:2px solid var(--text);
     background-color: rgba(0,0,0,0.35); color:var(--text); display:flex; align-items:center; justify-content:center;
@@ -269,49 +270,67 @@
     background-size:cover; background-position:center; flex-shrink:0; font-size:0.85rem;
   }
   .compose-trigger-text{ flex:1; }
+
+  .conv-row{
+    display:flex; align-items:center; gap:0.7rem; width:100%; background:none; border:none;
+    border-bottom:1px solid var(--line); padding:0.8rem 0; cursor:pointer; text-align:start; color:var(--text);
+  }
+  .conv-row:last-child{ border-bottom:none; }
+  .conv-avatar{
+    width:2.8rem; height:2.8rem; border-radius:50%; background-color:var(--accent); color:#1A1120;
+    display:flex; align-items:center; justify-content:center; font-weight:700; overflow:hidden;
+    background-size:cover; background-position:center; flex-shrink:0;
+  }
+  .conv-info{ flex:1; display:flex; flex-direction:column; gap:0.15rem; min-width:0; }
+  .conv-name{ font-weight:700; font-family:'Cairo'; }
+  .conv-preview{ font-size:0.85rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pin-btn{ background:none; border:none; font-size:1rem; opacity:0.35; cursor:pointer; padding:0.3rem; flex-shrink:0; }
+  .pin-btn.pinned{ opacity:1; }
 </style>
 </head>
 <body data-theme="purple">
 <div class="wrap">
 
   <header class="topbar2">
-    <div class="brand-row">
-      <div class="beam-wrap" aria-hidden="true">
-        <svg class="lighthouse" viewBox="0 0 34 34">
-          <polygon class="beam" points="17,10 34,0 34,20" fill="var(--accent-strong)"></polygon>
-          <rect x="13" y="10" width="8" height="16" fill="var(--text)"></rect>
-          <polygon points="11,10 23,10 19,4 15,4" fill="var(--text)"></polygon>
-          <rect x="10" y="26" width="14" height="4" fill="var(--text)"></rect>
-          <circle cx="17" cy="9" r="1.6" fill="var(--accent)"></circle>
-        </svg>
+    <div class="topbar-row1">
+      <div class="brand-row">
+        <div class="beam-wrap" aria-hidden="true">
+          <svg class="lighthouse" viewBox="0 0 34 34">
+            <polygon class="beam" points="17,10 34,0 34,20" fill="var(--accent-strong)"></polygon>
+            <rect x="13" y="10" width="8" height="16" fill="var(--text)"></rect>
+            <polygon points="11,10 23,10 19,4 15,4" fill="var(--text)"></polygon>
+            <rect x="10" y="26" width="14" height="4" fill="var(--text)"></rect>
+            <circle cx="17" cy="9" r="1.6" fill="var(--accent)"></circle>
+          </svg>
+        </div>
+        <span class="brand">الميناء</span>
       </div>
-      <span class="brand">الميناء</span>
+
+      <div class="left-col hidden" id="leftCol">
+        <button type="button" class="profile-circle-lg" id="avatarBtn" aria-label="ملفك الشخصي"></button>
+        <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="القائمة" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <nav class="side-nav hidden" id="sideNav" aria-label="التنقل">
+          <button type="button" class="side-nav-btn" data-tab="album" title="الألبوم" aria-label="الألبوم">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5c2-1 5-1 7 0v14c-2-1-5-1-7 0V5Z"/><path d="M20 5c-2-1-5-1-7 0v14c2-1 5-1 7 0V5Z"/></svg>
+          </button>
+          <button type="button" class="side-nav-btn" data-tab="search" title="بحث" aria-label="بحث">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg>
+          </button>
+          <button type="button" class="side-nav-btn" data-tab="chat" title="الدردشة" aria-label="الدردشة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 3 3 10.5l7 2.5 2 7L21 3Z"/><path d="M10 13l4-4"/></svg>
+          </button>
+          <button type="button" class="side-nav-btn" data-tab="feed" title="الرئيسية" aria-label="الرئيسية">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></svg>
+        </button>
+      </nav>
+      </div>
     </div>
 
     <div class="presence-row hidden" id="presenceRow">
       <div class="online-list" id="onlineList"></div>
       <button type="button" class="arrow-btn" id="onlineMoreBtn" aria-label="عرض كل المتصلين">▶</button>
-    </div>
-
-    <div class="left-col hidden" id="leftCol">
-      <button type="button" class="profile-circle-lg" id="avatarBtn" aria-label="ملفك الشخصي"></button>
-      <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="القائمة" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      <nav class="side-nav hidden" id="sideNav" aria-label="التنقل">
-        <button type="button" class="side-nav-btn" data-tab="album" title="الألبوم" aria-label="الألبوم">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5c2-1 5-1 7 0v14c-2-1-5-1-7 0V5Z"/><path d="M20 5c-2-1-5-1-7 0v14c2-1 5-1 7 0V5Z"/></svg>
-        </button>
-        <button type="button" class="side-nav-btn" data-tab="search" title="بحث" aria-label="بحث">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg>
-        </button>
-        <button type="button" class="side-nav-btn" data-tab="chat" title="الدردشة" aria-label="الدردشة">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 3 3 10.5l7 2.5 2 7L21 3Z"/><path d="M10 13l4-4"/></svg>
-        </button>
-        <button type="button" class="side-nav-btn" data-tab="feed" title="الرئيسية" aria-label="الرئيسية">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></svg>
-        </button>
-      </nav>
     </div>
   </header>
 
@@ -372,26 +391,53 @@
     </div>
 
     <div id="tabChat" class="hidden">
-      <div class="card">
-        <div id="chatList"><p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p></div>
-        <div id="chatImagePreviewWrap" class="hidden" style="margin-bottom:0.6rem">
-          <img id="chatImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
-          <button class="del" id="chatImageRemoveBtn" type="button">إزالة الصورة</button>
+      <div id="chatListView">
+        <div class="tabs" style="margin-bottom:0.8rem">
+          <div class="tab active" id="chatAllBtn">الكل</div>
+          <div class="tab" id="chatGroupsBtn">المجموعات</div>
         </div>
-        <div class="row">
-          <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
-          <input type="file" id="chatImageInput" accept="image/*" class="hidden">
-          <button class="btn ghost small" id="chatAttachBtn" type="button" title="إرفاق صورة">📷</button>
-          <button class="btn" id="chatSendBtn">إرسال</button>
+        <div class="card fancy-card">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <div id="conversationsList"><p class="empty">لا يوجد أصدقاء بعد.</p></div>
         </div>
-        <div id="chatNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+      </div>
+
+      <div id="chatThreadView" class="hidden">
+        <div class="card row between" style="margin-bottom:0.8rem">
+          <div class="who">
+            <button type="button" class="btn ghost small" id="chatBackBtn">◀ رجوع</button>
+            <span class="avatar-btn avatar-tiny" id="threadAvatar"></span>
+            <span class="author" id="threadTitle"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div id="chatList"><p class="empty">لا توجد رسائل بعد — ابدأ المحادثة.</p></div>
+          <div id="chatImagePreviewWrap" class="hidden" style="margin-bottom:0.6rem">
+            <img id="chatImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
+            <button class="del" id="chatImageRemoveBtn" type="button">إزالة الصورة</button>
+          </div>
+          <div class="row">
+            <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
+            <input type="file" id="chatImageInput" accept="image/*" class="hidden">
+            <button class="btn ghost small" id="chatAttachBtn" type="button" title="إرفاق صورة">📷</button>
+            <button class="btn" id="chatSendBtn">إرسال</button>
+          </div>
+          <div id="chatNotice" class="notice hidden" style="margin-top:0.6rem"></div>
+        </div>
       </div>
     </div>
 
     <div id="tabAlbum" class="hidden">
       <div class="card">
-        <label for="albumPhotoInput">أضف صورة إلى الألبوم</label>
-        <input type="file" id="albumPhotoInput" accept="image/*" style="margin-bottom:0.85rem;">
+        <label>أضف صورة إلى الألبوم</label>
+        <div class="row" style="margin-bottom:0.85rem; gap:0.7rem;">
+          <button type="button" class="camera-badge" id="albumPhotoBtn" aria-label="اختيار صورة" style="position:static; flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-2h6l2 2h3v11H4V8Z"/><circle cx="12" cy="13.5" r="3.3"/></svg>
+          </button>
+          <span class="muted" id="albumPhotoStatus">اختر صورة لإضافتها</span>
+        </div>
+        <img id="albumPhotoPreview" alt="" class="hidden" style="max-height:110px; border-radius:10px; display:block; margin-bottom:0.85rem;">
+        <input type="file" id="albumPhotoInput" accept="image/*" class="hidden">
         <label for="albumCaption">صف هذه الصورة</label>
         <textarea id="albumCaption" rows="2" placeholder="اكتب وصفًا لطيفًا لهذه الصورة…"></textarea>
         <button class="btn" id="albumAddBtn">إضافة</button>
@@ -535,7 +581,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   import {
     getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot,
-    query, orderBy, limit, limitToLast, serverTimestamp
+    query, orderBy, limit, limitToLast, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -557,6 +603,7 @@
   const chatCol = collection(db, 'messages');
   const profilesCol = collection(db, 'profiles');
   const albumCol = collection(db, 'album');
+  const dmsCol = collection(db, 'dms');
 
   let currentUser = null;
   let myProfile = { displayName: '', photo: '', bio: '' };
@@ -772,7 +819,7 @@
     $('profileModal').classList.add('hidden');
   });
 
-  let unsubscribePosts = null, unsubscribeChat = null, unsubscribeProfiles = null, unsubscribeMyProfile = null, unsubscribeAlbum = null;
+  let unsubscribePosts = null, unsubscribeProfiles = null, unsubscribeMyProfile = null, unsubscribeAlbum = null;
   let heartbeatInterval = null, onlineRowInterval = null;
 
   onAuthStateChanged(auth, (user) => {
@@ -782,12 +829,16 @@
     } else {
       currentUser = null;
       unsubscribePosts && unsubscribePosts();
-      unsubscribeChat && unsubscribeChat();
+      unsubscribeThread && unsubscribeThread();
+      unsubscribeDms && unsubscribeDms();
       unsubscribeProfiles && unsubscribeProfiles();
       unsubscribeMyProfile && unsubscribeMyProfile();
       unsubscribeAlbum && unsubscribeAlbum();
       heartbeatInterval && clearInterval(heartbeatInterval);
       onlineRowInterval && clearInterval(onlineRowInterval);
+      activeConversation = null;
+      $('chatThreadView').classList.add('hidden');
+      $('chatListView').classList.remove('hidden');
       $('appScreen').classList.add('hidden');
       $('authScreen').classList.remove('hidden');
       $('profileModal').classList.add('hidden');
@@ -1011,6 +1062,27 @@
 
   let chatEditingId = null;
   let pendingChatImage = null; // compressed data URL waiting to be sent
+  let activeConversation = null; // { type:'group' } or { type:'dm', id, otherUid, otherName, otherPhoto }
+  let unsubscribeThread = null;
+  let unsubscribeDms = null;
+  let dmConvosCache = {}; // otherUid -> { id, participants, lastText, lastTs, lastSenderUid }
+  let chatListMode = 'all'; // 'all' | 'groups'
+
+  function convoIdFor(a, b){ return [a, b].sort().join('_'); }
+  function loadPinned(){ try{ return JSON.parse(localStorage.getItem('harbor-pinned-chats') || '[]'); }catch(e){ return []; } }
+  function savePinned(arr){ try{ localStorage.setItem('harbor-pinned-chats', JSON.stringify(arr)); }catch(e){} }
+  function togglePin(uid){
+    const pinned = loadPinned();
+    const i = pinned.indexOf(uid);
+    if (i === -1) pinned.push(uid); else pinned.splice(i, 1);
+    savePinned(pinned);
+  }
+  function messagesCollectionRef(){
+    return activeConversation.type === 'group' ? chatCol : collection(db, 'dms', activeConversation.id, 'messages');
+  }
+  function messageDocRef(id){
+    return activeConversation.type === 'group' ? doc(db, 'messages', id) : doc(db, 'dms', activeConversation.id, 'messages', id);
+  }
 
   function chatRowHtml(m, isMine){
     const editedTag = m.edited ? `<span class="ts" style="margin-inline-start:0.3rem">(معدّلة)</span>` : '';
@@ -1057,7 +1129,7 @@
 
       list.querySelectorAll('.chat-del-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          try{ await deleteDoc(doc(db, 'messages', btn.dataset.id)); }
+          try{ await deleteDoc(messageDocRef(btn.dataset.id)); }
           catch(e){
             console.error('chat delete failed:', e);
             $('chatNotice').textContent = 'تعذّر حذف الرسالة (' + (e.code || e.message || 'خطأ') + ')';
@@ -1077,7 +1149,7 @@
           const input = list.querySelector(`.chat-edit-input[data-id="${id}"]`);
           const newText = input ? input.value.trim() : '';
           try{
-            await updateDoc(doc(db, 'messages', id), { text: newText, edited: true, editedTs: serverTimestamp() });
+            await updateDoc(messageDocRef(id), { text: newText, edited: true, editedTs: serverTimestamp() });
             chatEditingId = null;
           }catch(e){
             console.error('chat edit failed:', e);
@@ -1124,12 +1196,20 @@
   async function sendChat(){
     const text = $('chatInput').value.trim();
     const photo = pendingChatImage;
-    if ((!text && !photo) || !currentUser) return;
+    if ((!text && !photo) || !currentUser || !activeConversation) return;
     $('chatSendBtn').disabled = true;
     try{
       const payload = { user: currentUser.displayName, uid: currentUser.uid, text, ts: serverTimestamp() };
       if (photo) payload.photo = photo;
-      await addDoc(chatCol, payload);
+      if (activeConversation.type === 'dm'){
+        await setDoc(doc(db, 'dms', activeConversation.id), {
+          participants: [currentUser.uid, activeConversation.otherUid],
+          lastText: text || '📷 صورة',
+          lastTs: serverTimestamp(),
+          lastSenderUid: currentUser.uid
+        }, { merge: true });
+      }
+      await addDoc(messagesCollectionRef(), payload);
       $('chatInput').value = '';
       pendingChatImage = null;
       $('chatImagePreviewWrap').classList.add('hidden');
@@ -1143,9 +1223,149 @@
     }
   }
 
+  // ---------- Conversations list & private threads ----------
+  function conversationRowHtml(conv){
+    const style = conv.photo ? `background-image:url(${conv.photo});background-size:cover;background-position:center;` : '';
+    const initial = (conv.name || '?').trim().charAt(0).toUpperCase();
+    const pinIcon = conv.pinned ? '📌 ' : '';
+    const preview = conv.lastText ? escapeHtml(conv.lastText) : 'ابدأ محادثة جديدة';
+    return `
+      <button type="button" class="conv-row" data-uid="${conv.uid}">
+        <span class="conv-avatar" style="${style}">${conv.photo ? '' : initial}</span>
+        <span class="conv-info">
+          <span class="conv-name">${pinIcon}${escapeHtml(conv.name)}</span>
+          <span class="conv-preview">${preview}</span>
+        </span>
+        <button type="button" class="pin-btn ${conv.pinned ? 'pinned' : ''}" data-pin-uid="${conv.uid}" aria-label="تثبيت المحادثة">📌</button>
+      </button>`;
+  }
+
+  function renderConversationsList(){
+    const list = $('conversationsList');
+    if (chatListMode === 'groups'){
+      list.innerHTML = `
+        <button type="button" class="conv-row" data-group="1">
+          <span class="conv-avatar">🌙</span>
+          <span class="conv-info">
+            <span class="conv-name">دردشة الجميع</span>
+            <span class="conv-preview">المحادثة العامة لكل أعضاء الميناء</span>
+          </span>
+        </button>`;
+      list.querySelector('.conv-row').addEventListener('click', openGroupThread);
+      return;
+    }
+    const pinned = loadPinned();
+    const friends = Object.keys(profilesCache)
+      .filter(uid => currentUser && uid !== currentUser.uid)
+      .map(uid => {
+        const prof = profilesCache[uid] || {};
+        const conv = dmConvosCache[uid];
+        return {
+          uid,
+          name: prof.displayName || 'صديق',
+          photo: prof.photo || '',
+          lastText: conv ? conv.lastText : '',
+          lastTsMillis: conv && conv.lastTs ? conv.lastTs.toMillis() : 0,
+          pinned: pinned.includes(uid)
+        };
+      })
+      .sort((a, b) => (b.pinned - a.pinned) || (b.lastTsMillis - a.lastTsMillis) || a.name.localeCompare(b.name));
+
+    if (!friends.length){
+      list.innerHTML = '<p class="empty">لا يوجد أصدقاء بعد.</p>';
+      return;
+    }
+    list.innerHTML = friends.map(conversationRowHtml).join('');
+    list.querySelectorAll('.pin-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePin(btn.dataset.pinUid);
+        renderConversationsList();
+      });
+    });
+    list.querySelectorAll('.conv-row[data-uid]').forEach(row => {
+      row.addEventListener('click', () => openDmThread(row.dataset.uid));
+    });
+    twemojify(list);
+  }
+
+  $('chatAllBtn').addEventListener('click', () => {
+    chatListMode = 'all';
+    $('chatAllBtn').classList.add('active'); $('chatGroupsBtn').classList.remove('active');
+    renderConversationsList();
+  });
+  $('chatGroupsBtn').addEventListener('click', () => {
+    chatListMode = 'groups';
+    $('chatGroupsBtn').classList.add('active'); $('chatAllBtn').classList.remove('active');
+    renderConversationsList();
+  });
+
+  function openThreadCommon(){
+    chatCache = [];
+    $('chatListView').classList.add('hidden');
+    $('chatThreadView').classList.remove('hidden');
+    $('chatInput').value = '';
+    pendingChatImage = null;
+    $('chatImagePreviewWrap').classList.add('hidden');
+    $('chatNotice').classList.add('hidden');
+    chatEditingId = null;
+  }
+
+  function openGroupThread(){
+    activeConversation = { type: 'group' };
+    openThreadCommon();
+    $('threadTitle').textContent = 'دردشة الجميع';
+    setAvatarVisual($('threadAvatar'), '', 'دردشة الجميع');
+    unsubscribeThread && unsubscribeThread();
+    const q = query(chatCol, orderBy('ts', 'asc'), limitToLast(200));
+    unsubscribeThread = onSnapshot(q, (snap) => {
+      chatCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
+      renderChat();
+    }, () => { $('chatNotice').textContent = 'تعذّر تحميل الدردشة.'; $('chatNotice').classList.remove('hidden'); });
+  }
+
+  function openDmThread(otherUid){
+    const prof = profilesCache[otherUid] || {};
+    activeConversation = { type: 'dm', id: convoIdFor(currentUser.uid, otherUid), otherUid, otherName: prof.displayName || 'صديق', otherPhoto: prof.photo || '' };
+    openThreadCommon();
+    $('threadTitle').textContent = activeConversation.otherName;
+    setAvatarVisual($('threadAvatar'), activeConversation.otherPhoto, activeConversation.otherName);
+    unsubscribeThread && unsubscribeThread();
+    const q = query(collection(db, 'dms', activeConversation.id, 'messages'), orderBy('ts', 'asc'), limitToLast(200));
+    unsubscribeThread = onSnapshot(q, (snap) => {
+      chatCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
+      renderChat();
+    }, () => { $('chatNotice').textContent = 'تعذّر تحميل المحادثة.'; $('chatNotice').classList.remove('hidden'); });
+  }
+
+  $('chatBackBtn').addEventListener('click', () => {
+    unsubscribeThread && unsubscribeThread();
+    unsubscribeThread = null;
+    activeConversation = null;
+    $('chatThreadView').classList.add('hidden');
+    $('chatListView').classList.remove('hidden');
+  });
+
   // ---------- Album (flip-book) ----------
   let albumCache = [];
   let albumIndex = 0;
+
+  $('albumPhotoBtn').addEventListener('click', () => $('albumPhotoInput').click());
+  $('albumPhotoInput').addEventListener('change', () => {
+    const file = $('albumPhotoInput').files[0];
+    if (!file){
+      $('albumPhotoPreview').classList.add('hidden');
+      $('albumPhotoStatus').textContent = 'اختر صورة لإضافتها';
+      return;
+    }
+    $('albumPhotoStatus').textContent = file.name || 'تم اختيار صورة';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      $('albumPhotoPreview').src = e.target.result;
+      $('albumPhotoPreview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
 
   $('albumAddBtn').addEventListener('click', async () => {
     const file = $('albumPhotoInput').files[0];
@@ -1164,6 +1384,8 @@
         author: currentUser.displayName, uid: currentUser.uid, photo, caption, ts: serverTimestamp()
       });
       $('albumPhotoInput').value = '';
+      $('albumPhotoPreview').classList.add('hidden');
+      $('albumPhotoStatus').textContent = 'اختر صورة لإضافتها';
       $('albumCaption').value = '';
       albumIndex = 0;
     }catch(err){
@@ -1321,12 +1543,18 @@
       if (!$('profileModal').classList.contains('hidden')) renderMyPosts();
     }, () => { $('appStatus').textContent = 'تعذّر تحميل المنشورات — تحقق من قواعد Firestore.'; });
 
-    unsubscribeChat && unsubscribeChat();
-    const chatQuery = query(chatCol, orderBy('ts', 'asc'), limitToLast(200));
-    unsubscribeChat = onSnapshot(chatQuery, (snap) => {
-      chatCache = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
-      renderChat();
-    }, () => { $('appStatus').textContent = 'تعذّر تحميل الدردشة — تحقق من قواعد Firestore.'; });
+    unsubscribeDms && unsubscribeDms();
+    const dmsQuery = query(dmsCol, where('participants', 'array-contains', currentUser.uid));
+    unsubscribeDms = onSnapshot(dmsQuery, (snap) => {
+      dmConvosCache = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const otherUid = (data.participants || []).find(u => u !== currentUser.uid);
+        if (otherUid) dmConvosCache[otherUid] = { id: d.id, ...data };
+      });
+      if (activeConversation === null) renderConversationsList();
+    }, () => { $('appStatus').textContent = 'تعذّر تحميل المحادثات — تحقق من قواعد Firestore.'; });
+    renderConversationsList();
 
     unsubscribeAlbum && unsubscribeAlbum();
     const albumQuery = query(albumCol, orderBy('ts', 'desc'), limit(200));
