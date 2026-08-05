@@ -43,6 +43,22 @@
 
   .wrap{ max-width: 640px; margin: 0 auto; padding: 1.25rem 1rem 4rem; position: relative; z-index: 1; }
 
+  /* Full-screen chat thread, like any chat app on social media */
+  body.chat-fullscreen .topbar2,
+  body.chat-fullscreen .tabs,
+  body.chat-fullscreen #tabFeed,
+  body.chat-fullscreen #chatListView{ display: none !important; }
+  body.chat-fullscreen .wrap{ max-width: 100%; padding: 0; }
+  #chatThreadView.fullscreen-chat{
+    position: fixed; inset: 0; z-index: 900;
+    display: flex; flex-direction: column;
+    background: var(--card); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 0.75rem; overflow: hidden;
+  }
+  #chatThreadView.fullscreen-chat #chatList{ flex: 1; overflow-y: auto; }
+  #chatThreadView.fullscreen-chat > .card:first-child{ margin-bottom: 0.5rem; flex-shrink: 0; }
+  #chatThreadView.fullscreen-chat > .card:last-child{ flex-shrink: 0; margin-bottom: 0; }
+
   header.topbar{ display:flex; align-items:center; justify-content:space-between; gap: 0.75rem; padding: 1rem 0 1.25rem; flex-wrap: wrap; }
   .brand-row{ display:flex; align-items:center; gap:0.65rem; }
   .brand{ font-size: 1.7rem; color: var(--text); text-shadow: 0 1px 6px rgba(0,0,0,0.4); }
@@ -659,7 +675,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   import {
     getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot,
-    query, orderBy, limit, limitToLast, where, serverTimestamp
+    query, orderBy, limit, limitToLast, where, serverTimestamp, arrayUnion, getDocs
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -684,7 +700,7 @@
   const dmsCol = collection(db, 'dms');
 
   let currentUser = null;
-  let myProfile = { displayName: '', photo: '', bio: '' };
+  let myProfile = { displayName: '', photo: '', bio: '', blockedUids: [] };
   let profilesCache = {};
   let selectedMood = '';
   let fontStep = 0;
@@ -934,6 +950,8 @@
       onlineRowInterval && clearInterval(onlineRowInterval);
       activeConversation = null;
       $('chatThreadView').classList.add('hidden');
+      $('chatThreadView').classList.remove('fullscreen-chat');
+      document.body.classList.remove('chat-fullscreen');
       $('chatListView').classList.remove('hidden');
       $('appScreen').classList.add('hidden');
       $('authScreen').classList.remove('hidden');
@@ -1202,6 +1220,11 @@
     if (i === -1) pinned.push(uid); else pinned.splice(i, 1);
     savePinned(pinned);
   }
+  function removePin(uid){
+    const pinned = loadPinned();
+    const i = pinned.indexOf(uid);
+    if (i !== -1){ pinned.splice(i, 1); savePinned(pinned); }
+  }
   function messagesCollectionRef(){
     return activeConversation.type === 'group' ? chatCol : collection(db, 'dms', activeConversation.id, 'messages');
   }
@@ -1397,8 +1420,9 @@
       return;
     }
     const pinned = loadPinned();
+    const blocked = myProfile.blockedUids || [];
     const conversations = Object.keys(dmConvosCache)
-      .filter(uid => currentUser && uid !== currentUser.uid)
+      .filter(uid => currentUser && uid !== currentUser.uid && !blocked.includes(uid))
       .map(uid => {
         const prof = profilesCache[uid] || {};
         const conv = dmConvosCache[uid];
@@ -1426,10 +1450,85 @@
       });
     });
     list.querySelectorAll('.conv-row[data-uid]').forEach(row => {
-      row.addEventListener('click', () => openDmThread(row.dataset.uid));
+      attachConvRowInteractions(row);
     });
     twemojify(list);
   }
+
+  // ---------- Long-press to open conversation options (block / delete) ----------
+  let longPressTimer = null;
+  let longPressFired = false;
+  const LONG_PRESS_MS = 500;
+
+  function attachConvRowInteractions(row){
+    const uid = row.dataset.uid;
+    const start = (e) => {
+      longPressFired = false;
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        longPressFired = true;
+        if (navigator.vibrate) { try{ navigator.vibrate(15); }catch(e){} }
+        openConvOptions(uid);
+      }, LONG_PRESS_MS);
+    };
+    const cancel = () => { clearTimeout(longPressTimer); };
+    row.addEventListener('pointerdown', start);
+    row.addEventListener('pointerup', cancel);
+    row.addEventListener('pointerleave', cancel);
+    row.addEventListener('pointercancel', cancel);
+    row.addEventListener('click', (e) => {
+      if (longPressFired){ e.preventDefault(); e.stopPropagation(); longPressFired = false; return; }
+      openDmThread(uid);
+    });
+  }
+
+  function openConvOptions(uid){
+    const prof = profilesCache[uid] || {};
+    $('convOptionsTitle').textContent = prof.displayName || 'صديق';
+    $('convOptionsModal').dataset.uid = uid;
+    $('convOptionsModal').classList.remove('hidden');
+  }
+
+  $('convOptionsCancelBtn').addEventListener('click', () => {
+    $('convOptionsModal').classList.add('hidden');
+  });
+
+  $('convBlockBtn').addEventListener('click', () => {
+    const uid = $('convOptionsModal').dataset.uid;
+    const prof = profilesCache[uid] || {};
+    $('convOptionsModal').classList.add('hidden');
+    confirmAction(`هل تريد حظر ${prof.displayName || 'هذا الصديق'}؟ لن ترى محادثاتكما بعد الآن.`, async () => {
+      try{
+        await setDoc(doc(db, 'profiles', currentUser.uid), { blockedUids: arrayUnion(uid) }, { merge: true });
+        removePin(uid);
+        renderConversationsList();
+      }catch(e){
+        $('appStatus').textContent = 'تعذّر الحظر، تحقق من قواعد Firestore.';
+      }
+    });
+  });
+
+  $('convDeleteChatBtn').addEventListener('click', () => {
+    const uid = $('convOptionsModal').dataset.uid;
+    const prof = profilesCache[uid] || {};
+    $('convOptionsModal').classList.add('hidden');
+    confirmAction(`هل تريد حذف المحادثة مع ${prof.displayName || 'هذا الصديق'}؟`, async () => {
+      try{
+        const convo = dmConvosCache[uid];
+        if (convo){
+          const msgsSnap = await getDocs(collection(db, 'dms', convo.id, 'messages'));
+          await Promise.all(msgsSnap.docs.map(d => deleteDoc(d.ref)));
+          await deleteDoc(doc(db, 'dms', convo.id));
+        }
+        removePin(uid);
+        if (activeConversation && activeConversation.otherUid === uid){
+          $('chatBackBtn').click();
+        }
+      }catch(e){
+        $('appStatus').textContent = 'تعذّر حذف المحادثة، تحقق من قواعد Firestore.';
+      }
+    });
+  });
 
   $('chatAllBtn').addEventListener('click', () => {
     chatListMode = 'all';
@@ -1446,6 +1545,8 @@
     chatCache = [];
     $('chatListView').classList.add('hidden');
     $('chatThreadView').classList.remove('hidden');
+    $('chatThreadView').classList.add('fullscreen-chat');
+    document.body.classList.add('chat-fullscreen');
     $('chatInput').value = '';
     pendingChatImage = null;
     $('chatImagePreviewWrap').classList.add('hidden');
@@ -1504,6 +1605,8 @@
     unsubscribeThread = null;
     activeConversation = null;
     $('chatThreadView').classList.add('hidden');
+    $('chatThreadView').classList.remove('fullscreen-chat');
+    document.body.classList.remove('chat-fullscreen');
     $('chatListView').classList.remove('hidden');
   });
 
@@ -1729,11 +1832,12 @@
     unsubscribeMyProfile = onSnapshot(doc(db, 'profiles', currentUser.uid), (snap) => {
       if (snap.exists()){
         const d = snap.data();
-        myProfile = { displayName: d.displayName || currentUser.displayName, photo: d.photo || '', bio: d.bio || '' };
+        myProfile = { displayName: d.displayName || currentUser.displayName, photo: d.photo || '', bio: d.bio || '', blockedUids: d.blockedUids || [] };
         currentUser.displayName = myProfile.displayName;
         $('whoami').textContent = 'مسجّل الدخول باسم ' + myProfile.displayName;
         setAvatarVisual($('avatarBtn'), myProfile.photo, myProfile.displayName);
         setAvatarVisual($('composeTriggerAvatar'), myProfile.photo, myProfile.displayName);
+        if (activeConversation === null) renderConversationsList();
       }
     });
 
