@@ -294,6 +294,10 @@
   .conv-preview{ font-size:0.85rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pin-btn{ background:none; border:none; font-size:1rem; opacity:0.35; cursor:pointer; padding:0.3rem; flex-shrink:0; }
   .pin-btn.pinned{ opacity:1; }
+
+  .user-link{ cursor:pointer; }
+  .user-link:hover{ text-decoration:underline; }
+  .online-item.user-link:hover{ text-decoration:none; opacity:0.85; }
 </style>
 </head>
 <body data-theme="purple">
@@ -478,12 +482,17 @@
 
     <div id="tabSearch" class="hidden">
       <div class="card">
-        <label for="searchInput">ابحث في المنشورات</label>
-        <input type="text" id="searchInput" placeholder="اكتب كلمة أو اسم للبحث…">
+        <label for="searchInput">ابحث عن أشخاص أو منشورات</label>
+        <input type="text" id="searchInput" placeholder="اكتب اسمًا أو كلمة للبحث…">
+      </div>
+      <div class="card fancy-card" id="searchPeopleCard" style="display:none">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <h3 style="margin-top:0">الأشخاص</h3>
+        <div id="searchPeopleList"></div>
       </div>
       <div class="card fancy-card">
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-        <div id="searchResultsList"><p class="empty">ابدأ الكتابة للبحث في المنشورات.</p></div>
+        <div id="searchResultsList"><p class="empty">ابدأ الكتابة للبحث.</p></div>
       </div>
     </div>
     <p class="status" id="appStatus"></p>
@@ -526,6 +535,30 @@
         <button class="btn ghost small" id="closeOnline">✕</button>
       </div>
       <div id="onlineFullList" style="margin-top:0.8rem"></div>
+    </div>
+  </div>
+
+  <!-- VIEW PROFILE MODAL (someone else's) -->
+  <div id="viewProfileModal" class="modal-overlay hidden">
+    <div class="card modal-card">
+      <div class="row between">
+        <span></span>
+        <button class="btn ghost small" id="closeViewProfile">✕</button>
+      </div>
+
+      <div class="profile-avatar-wrap">
+        <span id="viewProfileAvatar" class="profile-avatar-big" style="display:flex; align-items:center; justify-content:center; font-family:'Cairo'; font-weight:700; font-size:2rem;"></span>
+      </div>
+      <p class="profile-name-input" id="viewProfileName" style="border-bottom:none; cursor:default;"></p>
+      <p class="profile-bio-input hidden" id="viewProfileBio" style="border-bottom:none; cursor:default;"></p>
+      <div class="row" style="justify-content:center; margin-bottom:0.5rem">
+        <button class="btn small" id="viewProfileDmBtn">💬 مراسلة</button>
+      </div>
+
+      <hr class="profile-divider">
+
+      <h3 class="profile-posts-heading">المنشورات</h3>
+      <div id="viewProfilePosts"><p class="empty">لا توجد منشورات بعد.</p></div>
     </div>
   </div>
 
@@ -663,10 +696,10 @@
     const photo = prof && prof.photo;
     const initial = ((prof && prof.displayName) || name || '?').trim().charAt(0).toUpperCase();
     const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
-    return `<span class="avatar-btn avatar-tiny" style="${style}">${photo ? '' : initial}</span>`;
+    return `<span class="avatar-btn avatar-tiny user-link" data-view-uid="${uid}" style="${style}">${photo ? '' : initial}</span>`;
   }
 
-  const ONLINE_WINDOW_MS = 45000;
+  const ONLINE_WINDOW_MS = 90000; // just over 1.5x the 60s heartbeat, so no flicker between pings
   function isOnline(prof){
     return !!(prof && prof.lastActive && (Date.now() - prof.lastActive.toMillis()) < ONLINE_WINDOW_MS);
   }
@@ -681,7 +714,7 @@
     const initial = (p.displayName || '?').trim().charAt(0).toUpperCase();
     const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
     return `
-      <div class="online-item">
+      <div class="online-item user-link" data-view-uid="${p.uid}">
         <div class="online-avatar-wrap">
           <div class="online-avatar" style="${style}">${photo ? '' : initial}</div>
           <span class="online-star"></span>
@@ -882,15 +915,41 @@
   $('searchInput').addEventListener('input', () => {
     const q = $('searchInput').value.trim().toLowerCase();
     const list = $('searchResultsList');
+    const peopleCard = $('searchPeopleCard');
+    const peopleList = $('searchPeopleList');
     if (!q){
-      list.innerHTML = '<p class="empty">ابدأ الكتابة للبحث في المنشورات.</p>';
+      list.innerHTML = '<p class="empty">ابدأ الكتابة للبحث.</p>';
+      peopleCard.style.display = 'none';
       return;
     }
+
+    const people = Object.keys(profilesCache)
+      .filter(uid => (!currentUser || uid !== currentUser.uid) && (profilesCache[uid].displayName || '').toLowerCase().includes(q));
+    if (people.length){
+      peopleCard.style.display = '';
+      peopleList.innerHTML = people.map(uid => {
+        const prof = profilesCache[uid];
+        const photo = prof.photo;
+        const initial = (prof.displayName || '?').trim().charAt(0).toUpperCase();
+        const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
+        return `
+          <button type="button" class="conv-row" data-view-uid="${uid}">
+            <span class="conv-avatar" style="${style}">${photo ? '' : initial}</span>
+            <span class="conv-info"><span class="conv-name">${escapeHtml(prof.displayName || '')}</span></span>
+          </button>`;
+      }).join('');
+      peopleList.querySelectorAll('.conv-row').forEach(row => {
+        row.addEventListener('click', () => openUserProfile(row.dataset.viewUid));
+      });
+    } else {
+      peopleCard.style.display = 'none';
+    }
+
     const results = postsCache.filter(p =>
       (p.text || '').toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q)
     );
     if (!results.length){
-      list.innerHTML = '<p class="empty">لا توجد نتائج مطابقة.</p>';
+      list.innerHTML = '<p class="empty">لا توجد منشورات مطابقة.</p>';
     } else {
       list.innerHTML = results.map(p => postRowHtml(p, currentUser && p.uid === currentUser.uid)).join('');
       wirePostListEvents(list);
@@ -959,7 +1018,7 @@
       return `
         <div class="post" data-id="${p.id}">
           <div class="post-head">
-            <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
+            <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author user-link" data-view-uid="${p.uid}">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
             <span class="ts">${timeAgo(p.tsMillis)}</span>
           </div>
           ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
@@ -973,7 +1032,7 @@
     return `
       <div class="post" data-id="${p.id}">
         <div class="post-head">
-          <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
+          <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author user-link" data-view-uid="${p.uid}">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
           <span class="ts">${timeAgo(p.tsMillis)}${editedTag}</span>
         </div>
         ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
@@ -1098,7 +1157,7 @@
       return `
         <div class="msg" data-id="${m.id}">
           <div class="msg-head">
-            <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author">${escapeHtml(m.user)}</span></span>
+            <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</span></span>
             <span class="ts">${timeAgo(m.tsMillis)}</span>
           </div>
           ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
@@ -1114,7 +1173,7 @@
     return `
       <div class="msg" data-id="${m.id}">
         <div class="msg-head">
-          <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author">${escapeHtml(m.user)}</span></span>
+          <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</span></span>
           <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
         </div>
         ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
@@ -1263,7 +1322,7 @@
       return;
     }
     const pinned = loadPinned();
-    const friends = Object.keys(profilesCache)
+    const conversations = Object.keys(dmConvosCache)
       .filter(uid => currentUser && uid !== currentUser.uid)
       .map(uid => {
         const prof = profilesCache[uid] || {};
@@ -1279,11 +1338,11 @@
       })
       .sort((a, b) => (b.pinned - a.pinned) || (b.lastTsMillis - a.lastTsMillis) || a.name.localeCompare(b.name));
 
-    if (!friends.length){
-      list.innerHTML = '<p class="empty">لا يوجد أصدقاء بعد.</p>';
+    if (!conversations.length){
+      list.innerHTML = '<p class="empty">لا توجد محادثات بعد — افتح صفحة صديق واضغط "مراسلة" لبدء محادثة.</p>';
       return;
     }
-    list.innerHTML = friends.map(conversationRowHtml).join('');
+    list.innerHTML = conversations.map(conversationRowHtml).join('');
     list.querySelectorAll('.pin-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1324,6 +1383,8 @@
     activeConversation = { type: 'group' };
     openThreadCommon();
     $('threadTitle').textContent = 'دردشة الجميع';
+    $('threadTitle').classList.remove('user-link'); delete $('threadTitle').dataset.viewUid;
+    $('threadAvatar').classList.remove('user-link'); delete $('threadAvatar').dataset.viewUid;
     setAvatarVisual($('threadAvatar'), '', 'دردشة الجميع');
     unsubscribeThread && unsubscribeThread();
     const q = query(chatCol, orderBy('ts', 'asc'), limitToLast(200));
@@ -1339,6 +1400,8 @@
     activeConversation = { type: 'dm', id: convoId, otherUid, otherName: prof.displayName || 'صديق', otherPhoto: prof.photo || '' };
     openThreadCommon();
     $('threadTitle').textContent = activeConversation.otherName;
+    $('threadTitle').classList.add('user-link'); $('threadTitle').dataset.viewUid = otherUid;
+    $('threadAvatar').classList.add('user-link'); $('threadAvatar').dataset.viewUid = otherUid;
     setAvatarVisual($('threadAvatar'), activeConversation.otherPhoto, activeConversation.otherName);
     unsubscribeThread && unsubscribeThread();
 
@@ -1434,6 +1497,8 @@
     const item = albumCache[albumIndex];
     $('albumPhoto').src = item.photo;
     $('albumAuthor').textContent = item.author;
+    $('albumAuthor').classList.add('user-link');
+    $('albumAuthor').dataset.viewUid = item.uid;
     $('albumAvatarChip').innerHTML = avatarChipHtml(item.uid, item.author);
     $('albumTs').textContent = timeAgo(item.tsMillis);
     $('albumCaptionText').textContent = item.caption || '';
@@ -1461,6 +1526,58 @@
     const item = albumCache[albumIndex];
     if (!item) return;
     try{ await deleteDoc(doc(db, 'album', item.id)); }catch(e){}
+  });
+
+  // ---------- View someone else's profile ----------
+  $('closeViewProfile').addEventListener('click', () => $('viewProfileModal').classList.add('hidden'));
+  let viewingProfileUid = null;
+  $('viewProfileDmBtn').addEventListener('click', () => {
+    if (!viewingProfileUid) return;
+    $('viewProfileModal').classList.add('hidden');
+    $('profileModal').classList.add('hidden');
+    showTab('chat');
+    openDmThread(viewingProfileUid);
+  });
+
+  function openUserProfile(uid){
+    if (!uid) return;
+    if (currentUser && uid === currentUser.uid){ openProfileModal(); return; }
+    viewingProfileUid = uid;
+    const prof = profilesCache[uid] || {};
+    const name = prof.displayName || 'صديق';
+    setAvatarVisual($('viewProfileAvatar'), prof.photo, name);
+    $('viewProfileName').textContent = name;
+    if (prof.bio){
+      $('viewProfileBio').textContent = prof.bio;
+      $('viewProfileBio').classList.remove('hidden');
+    } else {
+      $('viewProfileBio').classList.add('hidden');
+    }
+    const theirPosts = postsCache.filter(p => p.uid === uid);
+    const list = $('viewProfilePosts');
+    if (!theirPosts.length){
+      list.innerHTML = '<p class="empty">لا توجد منشورات بعد.</p>';
+    } else {
+      list.innerHTML = theirPosts.map(p => {
+        const thumbStyle = p.photo ? `background-image:url(${p.photo});background-size:cover;background-position:center;` : '';
+        return `
+          <div class="profile-post-row">
+            <div class="profile-post-thumb" style="${thumbStyle}"></div>
+            <div class="profile-post-text"><div>${escapeHtml(p.text || '')}</div></div>
+          </div>`;
+      }).join('');
+    }
+    twemojify(list);
+    $('viewProfileModal').classList.remove('hidden');
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('.user-link');
+    if (!el) return;
+    const uid = el.dataset.viewUid;
+    if (!uid) return;
+    e.stopPropagation();
+    openUserProfile(uid);
   });
 
   // ---------- Profile modal ----------
@@ -1549,12 +1666,12 @@
       renderPosts(); renderChat(); renderOnlineRow();
     });
 
-    // Presence: mark ourselves online now, then refresh every 25s while the app is open.
+    // Presence: mark ourselves online now, then refresh every 60s while the app is open.
     updateDoc(doc(db, 'profiles', currentUser.uid), { lastActive: serverTimestamp() }).catch(() => {});
     heartbeatInterval && clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
       updateDoc(doc(db, 'profiles', currentUser.uid), { lastActive: serverTimestamp() }).catch(() => {});
-    }, 25000);
+    }, 60000);
     onlineRowInterval && clearInterval(onlineRowInterval);
     onlineRowInterval = setInterval(renderOnlineRow, 15000);
 
