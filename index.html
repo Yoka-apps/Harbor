@@ -121,12 +121,12 @@
   .tab.active{ background: var(--accent); color: #1A1120; border-color: var(--accent); }
 
   .post{
-    border: 1px solid var(--line); border-radius: 14px; padding: 1rem; margin-bottom: 0.9rem;
+    border: 1px solid var(--star-yellow); border-radius: 14px; padding: 1rem; margin-bottom: 0.9rem;
     background: rgba(0,0,0,0.16);
   }
   .post:last-child{ margin-bottom: 0; }
   .msg{
-    border: 1px solid var(--line); border-radius: 14px; padding: 0.85rem 1rem; margin-bottom: 0.7rem;
+    border: 1px solid var(--star-yellow); border-radius: 14px; padding: 0.85rem 1rem; margin-bottom: 0.7rem;
     background: rgba(0,0,0,0.16);
   }
   .msg:last-child{ margin-bottom: 0; }
@@ -138,6 +138,15 @@
   .del:hover{ color: var(--danger); }
   .chat-photo{ max-width: 100%; max-height: 260px; border-radius: 10px; margin: 0.4rem 0; display:block; }
   #chatImagePreviewWrap{ display:flex; align-items:center; gap:0.6rem; }
+  .reply-quote{
+    border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius: 6px;
+    padding: 0.4rem 0.6rem; margin-bottom: 0.4rem; font-size: 0.88rem; color: var(--text-dim);
+  }
+  .reply-preview{
+    display:flex; align-items:center; justify-content:space-between; gap:0.6rem;
+    border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius: 6px;
+    padding: 0.45rem 0.6rem; margin-bottom: 0.6rem; font-size: 0.88rem; color: var(--text-dim);
+  }
   .empty{ text-align:center; color: var(--text-dim); padding: 1.5rem 0; }
   .post-mood{ font-size: 1.1rem; }
 
@@ -428,6 +437,10 @@
             <img id="chatImagePreview" alt="" style="max-height:90px; border-radius:10px; display:block;">
             <button class="del" id="chatImageRemoveBtn" type="button">إزالة الصورة</button>
           </div>
+          <div id="chatReplyPreview" class="hidden reply-preview">
+            <span id="replyPreviewText"></span>
+            <button class="del" id="chatReplyCancelBtn" type="button">إلغاء</button>
+          </div>
           <div class="row">
             <input type="text" id="chatInput" placeholder="اكتب رسالة…" style="flex:1; margin-bottom:0;">
             <input type="file" id="chatImageInput" accept="image/*" class="hidden">
@@ -535,6 +548,30 @@
         <button class="btn ghost small" id="closeOnline">✕</button>
       </div>
       <div id="onlineFullList" style="margin-top:0.8rem"></div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL (reused for every delete/block action) -->
+  <div id="confirmModal" class="modal-overlay hidden">
+    <div class="card modal-card">
+      <h2 style="margin-top:0" id="confirmTitle">هل أنت متأكد؟</h2>
+      <p class="muted" id="confirmMessage"></p>
+      <div class="row" style="justify-content:flex-end; margin-top:0.8rem">
+        <button class="btn ghost small" id="confirmCancelBtn">إلغاء</button>
+        <button class="btn small" id="confirmOkBtn" style="background:var(--danger); color:#2a0a0a;">تأكيد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERSATION OPTIONS MODAL (long-press on a chat) -->
+  <div id="convOptionsModal" class="modal-overlay hidden">
+    <div class="card modal-card">
+      <h2 style="margin-top:0" id="convOptionsTitle"></h2>
+      <div class="row" style="flex-direction:column; align-items:stretch; gap:0.6rem">
+        <button class="btn ghost" id="convBlockBtn">🚫 حظر</button>
+        <button class="btn ghost" id="convDeleteChatBtn">🗑️ حذف المحادثة</button>
+        <button class="btn ghost small" id="convOptionsCancelBtn">إلغاء</button>
+      </div>
     </div>
   </div>
 
@@ -655,6 +692,24 @@
   let chatCache = [];
 
   const $ = (id) => document.getElementById(id);
+
+  // ---------- Confirm dialog (used before every delete) ----------
+  let pendingConfirmAction = null;
+  function confirmAction(message, action){
+    $('confirmMessage').textContent = message;
+    pendingConfirmAction = action;
+    $('confirmModal').classList.remove('hidden');
+  }
+  $('confirmCancelBtn').addEventListener('click', () => {
+    pendingConfirmAction = null;
+    $('confirmModal').classList.add('hidden');
+  });
+  $('confirmOkBtn').addEventListener('click', async () => {
+    const action = pendingConfirmAction;
+    pendingConfirmAction = null;
+    $('confirmModal').classList.add('hidden');
+    if (action) await action();
+  });
 
   // ---------- Password fields shown as little gold stars ----------
   // The real <input type="password"> is untouched (so paste/autofill/backspace all work
@@ -1043,13 +1098,15 @@
 
   function wirePostListEvents(list){
     list.querySelectorAll('.del:not(.post-edit-btn)').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }
-        catch(e){
-          console.error('post delete failed:', e);
-          $('postNotice').textContent = 'تعذّر حذف المنشور (' + (e.code || e.message || 'خطأ') + ')';
-          $('postNotice').classList.remove('hidden');
-        }
+      btn.addEventListener('click', () => {
+        confirmAction('سيتم حذف هذا المنشور نهائيًا.', async () => {
+          try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }
+          catch(e){
+            console.error('post delete failed:', e);
+            $('postNotice').textContent = 'تعذّر حذف المنشور (' + (e.code || e.message || 'خطأ') + ')';
+            $('postNotice').classList.remove('hidden');
+          }
+        });
       });
     });
     list.querySelectorAll('.post-edit-btn').forEach(btn => {
@@ -1128,6 +1185,7 @@
   }
 
   let chatEditingId = null;
+  let replyingTo = null;
   let pendingChatImage = null; // compressed data URL waiting to be sent
   let activeConversation = null; // { type:'group' } or { type:'dm', id, otherUid, otherName, otherPhoto }
   let unsubscribeThread = null;
@@ -1176,13 +1234,15 @@
           <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</span></span>
           <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
         </div>
+        ${m.replyTo ? `<div class="reply-quote"><strong>${escapeHtml(m.replyTo.user || '')}</strong>: ${escapeHtml((m.replyTo.text || '').slice(0, 80))}</div>` : ''}
         ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
         ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
-        ${isMine ? `
-          <div class="row" style="margin-top:0.3rem">
+        <div class="row" style="margin-top:0.3rem">
+          <button class="del chat-reply-btn" data-id="${m.id}">رد</button>
+          ${isMine ? `
             <button class="del chat-edit-btn" data-id="${m.id}">تعديل</button>
-            <button class="del chat-del-btn" data-id="${m.id}">حذف</button>
-          </div>` : ''}
+            <button class="del chat-del-btn" data-id="${m.id}">حذف</button>` : ''}
+        </div>
       </div>`;
   }
 
@@ -1195,13 +1255,25 @@
       list.scrollTop = list.scrollHeight;
 
       list.querySelectorAll('.chat-del-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          try{ await deleteDoc(messageDocRef(btn.dataset.id)); }
-          catch(e){
-            console.error('chat delete failed:', e);
-            $('chatNotice').textContent = 'تعذّر حذف الرسالة (' + (e.code || e.message || 'خطأ') + ')';
-            $('chatNotice').classList.remove('hidden');
-          }
+        btn.addEventListener('click', () => {
+          confirmAction('سيتم حذف هذه الرسالة نهائيًا.', async () => {
+            try{ await deleteDoc(messageDocRef(btn.dataset.id)); }
+            catch(e){
+              console.error('chat delete failed:', e);
+              $('chatNotice').textContent = 'تعذّر حذف الرسالة (' + (e.code || e.message || 'خطأ') + ')';
+              $('chatNotice').classList.remove('hidden');
+            }
+          });
+        });
+      });
+      list.querySelectorAll('.chat-reply-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const msg = chatCache.find(m => m.id === btn.dataset.id);
+          if (!msg) return;
+          replyingTo = { id: msg.id, text: msg.text || (msg.photo ? '📷 صورة' : ''), user: msg.user };
+          $('replyPreviewText').textContent = replyingTo.user + ': ' + replyingTo.text.slice(0, 60);
+          $('chatReplyPreview').classList.remove('hidden');
+          $('chatInput').focus();
         });
       });
       list.querySelectorAll('.chat-edit-btn').forEach(btn => {
@@ -1268,6 +1340,7 @@
     try{
       const payload = { user: currentUser.displayName, uid: currentUser.uid, text, ts: serverTimestamp() };
       if (photo) payload.photo = photo;
+      if (replyingTo) payload.replyTo = { id: replyingTo.id, text: replyingTo.text, user: replyingTo.user };
       if (activeConversation.type === 'dm'){
         await setDoc(doc(db, 'dms', activeConversation.id), {
           participants: [currentUser.uid, activeConversation.otherUid],
@@ -1282,6 +1355,8 @@
       $('chatImagePreviewWrap').classList.add('hidden');
       $('chatImagePreview').src = '';
       $('chatNotice').classList.add('hidden');
+      replyingTo = null;
+      $('chatReplyPreview').classList.add('hidden');
     }catch(err){
       $('chatNotice').textContent = 'تعذّر إرسال الرسالة، تحقق من اتصالك.';
       $('chatNotice').classList.remove('hidden');
@@ -1522,10 +1597,12 @@
   // Newest photo is index 0; "next" moves toward older photos, "prev" moves back toward newer.
   $('albumNextBtn').addEventListener('click', () => flipTo(albumIndex + 1, 'next'));
   $('albumPrevBtn').addEventListener('click', () => flipTo(albumIndex - 1, 'prev'));
-  $('albumDelBtn').addEventListener('click', async () => {
+  $('albumDelBtn').addEventListener('click', () => {
     const item = albumCache[albumIndex];
     if (!item) return;
-    try{ await deleteDoc(doc(db, 'album', item.id)); }catch(e){}
+    confirmAction('سيتم حذف هذه الصورة من الألبوم نهائيًا.', async () => {
+      try{ await deleteDoc(doc(db, 'album', item.id)); }catch(e){}
+    });
   });
 
   // ---------- View someone else's profile ----------
