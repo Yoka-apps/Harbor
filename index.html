@@ -149,30 +149,32 @@
   .post-head, .msg-head{ display:flex; justify-content:space-between; gap:0.5rem; margin-bottom: 0.3rem; align-items:center; }
   .who{ display:flex; align-items:center; gap:0.45rem; }
   .author{ font-weight: 700; font-family:'Cairo'; }
+  #threadTitle{ font-size: 0.95rem; }
   .ts{ color: var(--text-dim); font-size: 0.85rem; }
   .del{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:0.85rem; text-decoration: underline; padding:0; font-family:'Cairo'; margin-inline-end: 0.9rem; }
   .del:hover{ color: var(--danger); }
   .chat-photo{ max-width: 100%; max-height: 260px; border-radius: 10px; margin: 0.4rem 0; display:block; }
 
   /* ---- Chat bubbles: mine on the right, theirs on the left, like any chat app ---- */
-  #chatList{ display:flex; flex-direction:column; gap:0.55rem; }
+  #chatList{ display:flex; flex-direction:column; gap:0.4rem; }
   .msg-row{ display:flex; align-items:flex-end; gap:0.4rem; direction:ltr; }
   .msg-row.mine{ justify-content:flex-end; }
   .msg-row.theirs{ justify-content:flex-start; }
   .msg-row .avatar-tiny{ flex-shrink:0; margin-bottom:0.1rem; }
   .msg-bubble{
-    direction:rtl; text-align:right; max-width:76%; min-width:3.5rem;
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-    padding: 0.5rem 0.75rem; position:relative; word-break: break-word;
+    direction:rtl; text-align:right; max-width:76%; min-width:3rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.4rem 0.6rem; position:relative; word-break: break-word;
+    font-size: 0.88rem; line-height: 1.35;
   }
   .msg-row.theirs .msg-bubble{ border-bottom-left-radius: 4px; }
   .msg-row.mine .msg-bubble{
-    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    color: #1A1120; border-color: transparent; border-bottom-right-radius: 4px;
+    background: linear-gradient(135deg, #8A5A3C, #6B4029);
+    color: var(--text); border-color: transparent; border-bottom-right-radius: 4px;
   }
-  .msg-row.mine .msg-bubble .ts{ color: rgba(26,17,32,0.65); }
-  .msg-row.mine .msg-bubble a{ color: #1A1120; }
-  .bubble-author{ font-weight:700; font-family:'Cairo'; font-size:0.85rem; margin-bottom:0.15rem; color: var(--accent-strong); }
+  .msg-row.mine .msg-bubble .ts{ color: rgba(251,243,255,0.65); }
+  .msg-row.mine .msg-bubble a{ color: var(--text); }
+  .bubble-author{ font-weight:700; font-family:'Cairo'; font-size:0.78rem; margin-bottom:0.1rem; color: var(--accent-strong); }
   .msg-row.mine .bubble-author{ display:none; }
   .bubble-meta{ display:flex; justify-content:flex-end; gap:0.3rem; margin-top:0.25rem; }
   .msg-actions{ display:flex; direction:ltr; margin-top:-0.35rem; padding: 0 0.2rem; }
@@ -180,6 +182,48 @@
   .msg-actions.theirs{ justify-content:flex-start; padding-inline-start: 2.1rem; }
   .msg-actions .del{ margin-inline-end:0.6rem; font-size:0.78rem; }
   .msg-edit-row{ direction:rtl; }
+
+  /* ---- Reactions (posts, comments, messages) ---- */
+  .reactions-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; direction:rtl; }
+  .reaction-badge{
+    display:inline-flex; align-items:center; gap:0.3rem; background: rgba(0,0,0,0.22);
+    border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.82rem;
+    color: var(--text); cursor:pointer; font-family:'Cairo';
+  }
+  .reaction-badge.mine{ border-color: var(--accent); background: rgba(243,183,140,0.25); color: var(--accent-strong); font-weight:700; }
+  .reaction-picker-wrap{ position:relative; display:inline-block; }
+  .reaction-add-btn{
+    background: rgba(0,0,0,0.18); border: 1px dashed var(--line); border-radius:999px; color: var(--text);
+    padding: 0.15rem 0.55rem; font-size: 0.95rem; cursor:pointer; line-height:1.4;
+  }
+  .reaction-picker{
+    position:absolute; bottom: 130%; inset-inline-start: 0; display:flex; gap:0.2rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.35rem 0.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.35); z-index: 40; direction:ltr;
+  }
+  .reaction-picker button{ background:none; border:none; font-size:1.2rem; cursor:pointer; padding:0.1rem; line-height:1; }
+  .reaction-picker button:hover{ transform: scale(1.25); }
+  .msg-row.mine .reactions-bar{ justify-content:flex-end; }
+  .msg-row.mine .reaction-badge{ background: rgba(26,17,32,0.14); border-color: rgba(26,17,32,0.3); }
+
+  /* ---- Comments ---- */
+  .comments-toggle-btn{ display:inline-block; margin-top:0.5rem; }
+  .comments-section{ margin-top:0.6rem; border-top:1px dashed var(--line); padding-top:0.6rem; }
+  .comment-row{ display:flex; gap:0.45rem; margin-bottom:0.65rem; align-items:flex-start; }
+  .comment-row:last-child{ margin-bottom:0; }
+  .comment-bubble{ flex:1; background: rgba(0,0,0,0.18); border-radius:12px; padding:0.5rem 0.7rem; min-width:0; }
+  .comment-head{ display:flex; justify-content:space-between; gap:0.5rem; align-items:center; }
+  .comment-author{ font-weight:700; font-family:'Cairo'; font-size:0.88rem; }
+  .comment-reply-quote{
+    border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius:6px;
+    padding:0.3rem 0.5rem; margin-bottom:0.3rem; font-size:0.8rem; color:var(--text-dim);
+  }
+  .comment-input-row{ margin-top:0.5rem; }
+  .comment-reply-preview{
+    display:flex; align-items:center; justify-content:space-between; gap:0.6rem;
+    border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius: 6px;
+    padding: 0.4rem 0.6rem; margin-top:0.5rem; font-size: 0.85rem; color: var(--text-dim);
+  }
   #chatImagePreviewWrap{ display:flex; align-items:center; gap:0.6rem; }
   .reply-quote{
     border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius: 6px;
@@ -702,7 +746,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   import {
     getFirestore, collection, addDoc, deleteDoc, doc, setDoc, updateDoc, onSnapshot,
-    query, orderBy, limit, limitToLast, where, serverTimestamp, arrayUnion, getDocs
+    query, orderBy, limit, limitToLast, where, serverTimestamp, arrayUnion, arrayRemove, getDocs
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -733,6 +777,14 @@
   let fontStep = 0;
   let postsCache = [];
   let chatCache = [];
+
+  // ---------- Reactions & comments state ----------
+  const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
+  let commentsCache = {};           // postId -> [comment, ...]
+  let commentUnsubscribers = {};    // postId -> unsubscribe fn
+  let openCommentsSet = new Set();  // postIds with expanded comments
+  let commentDrafts = {};           // postId -> draft text
+  let commentReplyState = {};       // postId -> { id, author, text } | null
 
   const $ = (id) => document.getElementById(id);
 
@@ -795,6 +847,104 @@
     const initial = ((prof && prof.displayName) || name || '?').trim().charAt(0).toUpperCase();
     const style = photo ? `background-image:url(${photo});background-size:cover;background-position:center;` : '';
     return `<span class="avatar-btn avatar-tiny user-link" data-view-uid="${uid}" style="${style}">${photo ? '' : initial}</span>`;
+  }
+
+  // ---------- Reactions (posts, comments, messages) ----------
+  function reactionsSummary(reactions){
+    if (!reactions) return [];
+    return Object.keys(reactions)
+      .map(emoji => ({ emoji, uids: reactions[emoji] || [] }))
+      .filter(r => r.uids.length > 0)
+      .sort((a, b) => b.uids.length - a.uids.length);
+  }
+
+  function myReactionEmoji(reactions){
+    if (!reactions || !currentUser) return null;
+    return Object.keys(reactions).find(emoji => (reactions[emoji] || []).includes(currentUser.uid)) || null;
+  }
+
+  function reactionsBarHtml(reactions, scope, id, postId){
+    const summary = reactionsSummary(reactions);
+    const mine = myReactionEmoji(reactions);
+    const attrs = `data-scope="${scope}" data-id="${id}"${postId ? ` data-post-id="${postId}"` : ''}`;
+    const badges = summary.map(r => `
+      <button type="button" class="reaction-badge ${r.emoji === mine ? 'mine' : ''}" ${attrs} data-emoji="${r.emoji}">${r.emoji} <span>${r.uids.length}</span></button>
+    `).join('');
+    return `
+      <div class="reactions-bar">
+        ${badges}
+        <span class="reaction-picker-wrap">
+          <button type="button" class="reaction-add-btn" ${attrs}>${mine || '🙂+'}</button>
+          <span class="reaction-picker hidden" ${attrs}>
+            ${REACTION_EMOJIS.map(e => `<button type="button" class="reaction-pick" ${attrs} data-emoji="${e}">${e}</button>`).join('')}
+          </span>
+        </span>
+      </div>`;
+  }
+
+  function reactionDocRef(scope, id, postId){
+    if (scope === 'post') return doc(db, 'posts', id);
+    if (scope === 'comment') return doc(db, 'posts', postId, 'comments', id);
+    if (scope === 'message') return messageDocRef(id);
+    return null;
+  }
+
+  function reactionDataFor(scope, id, postId){
+    if (scope === 'post'){ const p = postsCache.find(x => x.id === id); return p && p.reactions; }
+    if (scope === 'comment'){ const arr = commentsCache[postId] || []; const c = arr.find(x => x.id === id); return c && c.reactions; }
+    if (scope === 'message'){ const m = chatCache.find(x => x.id === id); return m && m.reactions; }
+    return null;
+  }
+
+  async function handleReactionToggle(scope, id, postId, emoji){
+    if (!currentUser) return;
+    const ref = reactionDocRef(scope, id, postId);
+    if (!ref) return;
+    const current = reactionDataFor(scope, id, postId) || {};
+    const uid = currentUser.uid;
+    const mine = myReactionEmoji(current);
+    const updates = {};
+    if (mine === emoji){
+      updates[`reactions.${emoji}`] = arrayRemove(uid);
+    } else {
+      if (mine) updates[`reactions.${mine}`] = arrayRemove(uid);
+      updates[`reactions.${emoji}`] = arrayUnion(uid);
+    }
+    try{ await updateDoc(ref, updates); }
+    catch(e){ console.error('reaction failed:', e); }
+  }
+
+  function closeAllReactionPickers(except){
+    document.querySelectorAll('.reaction-picker').forEach(p => { if (p !== except) p.classList.add('hidden'); });
+  }
+  document.addEventListener('click', () => closeAllReactionPickers());
+
+  function wireReactions(root){
+    root.querySelectorAll('.reaction-add-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const picker = btn.nextElementSibling;
+        const willOpen = picker.classList.contains('hidden');
+        closeAllReactionPickers();
+        if (willOpen) picker.classList.remove('hidden');
+      });
+    });
+    root.querySelectorAll('.reaction-picker').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+    root.querySelectorAll('.reaction-pick').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const { scope, id, postId, emoji } = btn.dataset;
+        handleReactionToggle(scope, id, postId, emoji);
+        closeAllReactionPickers();
+      });
+    });
+    root.querySelectorAll('.reaction-badge').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const { scope, id, postId, emoji } = btn.dataset;
+        handleReactionToggle(scope, id, postId, emoji);
+      });
+    });
   }
 
   const ONLINE_WINDOW_MS = 90000; // just over 1.5x the 60s heartbeat, so no flicker between pings
@@ -1112,6 +1262,120 @@
     }
   });
 
+  // ---------- Comments ----------
+  function commentRowHtml(c, postId){
+    const isMine = !!(currentUser && c.uid === currentUser.uid);
+    return `
+      <div class="comment-row" data-id="${c.id}">
+        ${avatarChipHtml(c.uid, c.author)}
+        <div class="comment-bubble">
+          <div class="comment-head">
+            <span class="comment-author user-link" data-view-uid="${c.uid}">${escapeHtml(c.author)}</span>
+            <span class="ts">${timeAgo(c.tsMillis)}</span>
+          </div>
+          ${c.replyTo ? `<div class="comment-reply-quote"><strong>${escapeHtml(c.replyTo.author || '')}</strong>: ${escapeHtml((c.replyTo.text || '').slice(0, 80))}</div>` : ''}
+          <div>${escapeHtml(c.text || '')}</div>
+          ${reactionsBarHtml(c.reactions, 'comment', c.id, postId)}
+          <div class="row" style="margin-top:0.35rem">
+            <button class="del comment-reply-btn" data-id="${c.id}" data-post-id="${postId}" data-author="${escapeHtml(c.author)}" data-text="${escapeHtml(c.text || '')}">رد</button>
+            ${isMine ? `<button class="del comment-del-btn" data-id="${c.id}" data-post-id="${postId}">حذف</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function commentsSectionHtml(postId){
+    const list = commentsCache[postId] || [];
+    const reply = commentReplyState[postId];
+    return `
+      <div class="comments-section" id="comments-${postId}">
+        <div class="comments-list">
+          ${list.length ? list.map(c => commentRowHtml(c, postId)).join('') : '<p class="empty" style="padding:0.3rem 0">لا توجد تعليقات بعد — كن أول من يعلّق.</p>'}
+        </div>
+        ${reply ? `
+          <div class="comment-reply-preview">
+            <span>الرد على ${escapeHtml(reply.author)}: ${escapeHtml((reply.text || '').slice(0, 60))}</span>
+            <button class="del comment-reply-cancel-btn" data-post-id="${postId}">إلغاء</button>
+          </div>` : ''}
+        <div class="row comment-input-row">
+          <input type="text" class="comment-input" data-post-id="${postId}" value="${escapeHtml(commentDrafts[postId] || '')}" placeholder="اكتب تعليقًا…" style="flex:1; margin-bottom:0;">
+          <button class="btn small comment-send-btn" data-post-id="${postId}">إرسال</button>
+        </div>
+      </div>`;
+  }
+
+  function toggleComments(postId){
+    if (openCommentsSet.has(postId)){
+      openCommentsSet.delete(postId);
+      commentUnsubscribers[postId] && commentUnsubscribers[postId]();
+      delete commentUnsubscribers[postId];
+      renderPosts();
+      return;
+    }
+    openCommentsSet.add(postId);
+    const q = query(collection(db, 'posts', postId, 'comments'), orderBy('ts', 'asc'), limit(200));
+    commentUnsubscribers[postId] = onSnapshot(q, (snap) => {
+      commentsCache[postId] = snap.docs.map(d => { const data = d.data(); return { id: d.id, ...data, tsMillis: data.ts ? data.ts.toMillis() : Date.now() }; });
+      renderPosts();
+    }, () => { $('postNotice').textContent = 'تعذّر تحميل التعليقات.'; $('postNotice').classList.remove('hidden'); });
+    renderPosts();
+  }
+
+  async function addComment(postId){
+    const text = (commentDrafts[postId] || '').trim();
+    if (!text || !currentUser) return;
+    const reply = commentReplyState[postId];
+    const payload = { author: currentUser.displayName, uid: currentUser.uid, text, ts: serverTimestamp() };
+    if (reply) payload.replyTo = { id: reply.id, author: reply.author, text: reply.text };
+    try{
+      await addDoc(collection(db, 'posts', postId, 'comments'), payload);
+      commentDrafts[postId] = '';
+      commentReplyState[postId] = null;
+      renderPosts();
+    }catch(e){
+      console.error('comment add failed:', e);
+      $('postNotice').textContent = 'تعذّر إرسال التعليق (' + (e.code || e.message || 'خطأ') + ')';
+      $('postNotice').classList.remove('hidden');
+    }
+  }
+
+  function wireCommentEvents(list){
+    list.querySelectorAll('.comments-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleComments(btn.dataset.id));
+    });
+    list.querySelectorAll('.comment-input').forEach(input => {
+      input.addEventListener('input', () => { commentDrafts[input.dataset.postId] = input.value; });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') addComment(input.dataset.postId); });
+    });
+    list.querySelectorAll('.comment-send-btn').forEach(btn => {
+      btn.addEventListener('click', () => addComment(btn.dataset.postId));
+    });
+    list.querySelectorAll('.comment-reply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const postId = btn.dataset.postId;
+        commentReplyState[postId] = { id: btn.dataset.id, author: btn.dataset.author, text: btn.dataset.text || '' };
+        renderPosts();
+        setTimeout(() => { const inp = $('comments-' + postId)?.querySelector('.comment-input'); inp && inp.focus(); }, 0);
+      });
+    });
+    list.querySelectorAll('.comment-reply-cancel-btn').forEach(btn => {
+      btn.addEventListener('click', () => { commentReplyState[btn.dataset.postId] = null; renderPosts(); });
+    });
+    list.querySelectorAll('.comment-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const { id, postId } = btn.dataset;
+        confirmAction('سيتم حذف هذا التعليق نهائيًا.', async () => {
+          try{ await deleteDoc(doc(db, 'posts', postId, 'comments', id)); }
+          catch(e){
+            console.error('comment delete failed:', e);
+            $('postNotice').textContent = 'تعذّر حذف التعليق (' + (e.code || e.message || 'خطأ') + ')';
+            $('postNotice').classList.remove('hidden');
+          }
+        });
+      });
+    });
+  }
+
   function postRowHtml(p, isMine){
     const editedTag = p.edited ? `<span class="ts" style="margin-inline-start:0.3rem">(معدّلة)</span>` : '';
     if (postEditingId === p.id){
@@ -1137,12 +1401,15 @@
         </div>
         ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
         ${p.text ? `<div>${escapeHtml(p.text)}</div>` : ''}
-        ${isMine ? `<div style="margin-top:0.4rem"><button class="del post-edit-btn" data-id="${p.id}">تعديل</button><button class="del" data-id="${p.id}">حذف</button></div>` : ''}
+        ${isMine ? `<div style="margin-top:0.4rem"><button class="del post-edit-btn" data-id="${p.id}">تعديل</button><button class="del post-del-btn" data-id="${p.id}">حذف</button></div>` : ''}
+        ${reactionsBarHtml(p.reactions, 'post', p.id)}
+        <button type="button" class="del comments-toggle-btn" data-id="${p.id}">${openCommentsSet.has(p.id) ? '🔼 إخفاء التعليقات' : '💬 التعليقات' + (commentsCache[p.id] ? ` (${commentsCache[p.id].length})` : '')}</button>
+        ${openCommentsSet.has(p.id) ? commentsSectionHtml(p.id) : ''}
       </div>`;
   }
 
   function wirePostListEvents(list){
-    list.querySelectorAll('.del:not(.post-edit-btn)').forEach(btn => {
+    list.querySelectorAll('.post-del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         confirmAction('سيتم حذف هذا المنشور نهائيًا.', async () => {
           try{ await deleteDoc(doc(db, 'posts', btn.dataset.id)); }
@@ -1175,6 +1442,8 @@
         }
       });
     });
+    wireReactions(list);
+    wireCommentEvents(list);
   }
 
   function renderPosts(){
@@ -1211,7 +1480,7 @@
           <div>${escapeHtml(p.text || '')}${editedTag}</div>
           <div class="row" style="justify-content:flex-end; margin-top:0.3rem">
             <button class="del post-edit-btn" data-id="${p.id}">تعديل</button>
-            <button class="del" data-id="${p.id}">حذف</button>
+            <button class="del post-del-btn" data-id="${p.id}">حذف</button>
           </div>
         </div>
       </div>`;
@@ -1285,6 +1554,7 @@
           ${m.replyTo ? `<div class="reply-quote"><strong>${escapeHtml(m.replyTo.user || '')}</strong>: ${escapeHtml((m.replyTo.text || '').slice(0, 80))}</div>` : ''}
           ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
           ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
+          ${reactionsBarHtml(m.reactions, 'message', m.id)}
           <div class="bubble-meta">
             <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
           </div>
@@ -1305,6 +1575,7 @@
     } else {
       list.innerHTML = chatCache.map(m => chatRowHtml(m, !!(currentUser && m.uid === currentUser.uid))).join('');
       list.scrollTop = list.scrollHeight;
+      wireReactions(list);
 
       list.querySelectorAll('.chat-del-btn').forEach(btn => {
         btn.addEventListener('click', () => {
