@@ -153,6 +153,33 @@
   .del{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:0.85rem; text-decoration: underline; padding:0; font-family:'Cairo'; margin-inline-end: 0.9rem; }
   .del:hover{ color: var(--danger); }
   .chat-photo{ max-width: 100%; max-height: 260px; border-radius: 10px; margin: 0.4rem 0; display:block; }
+
+  /* ---- Chat bubbles: mine on the right, theirs on the left, like any chat app ---- */
+  #chatList{ display:flex; flex-direction:column; gap:0.55rem; }
+  .msg-row{ display:flex; align-items:flex-end; gap:0.4rem; direction:ltr; }
+  .msg-row.mine{ justify-content:flex-end; }
+  .msg-row.theirs{ justify-content:flex-start; }
+  .msg-row .avatar-tiny{ flex-shrink:0; margin-bottom:0.1rem; }
+  .msg-bubble{
+    direction:rtl; text-align:right; max-width:76%; min-width:3.5rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.5rem 0.75rem; position:relative; word-break: break-word;
+  }
+  .msg-row.theirs .msg-bubble{ border-bottom-left-radius: 4px; }
+  .msg-row.mine .msg-bubble{
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: #1A1120; border-color: transparent; border-bottom-right-radius: 4px;
+  }
+  .msg-row.mine .msg-bubble .ts{ color: rgba(26,17,32,0.65); }
+  .msg-row.mine .msg-bubble a{ color: #1A1120; }
+  .bubble-author{ font-weight:700; font-family:'Cairo'; font-size:0.85rem; margin-bottom:0.15rem; color: var(--accent-strong); }
+  .msg-row.mine .bubble-author{ display:none; }
+  .bubble-meta{ display:flex; justify-content:flex-end; gap:0.3rem; margin-top:0.25rem; }
+  .msg-actions{ display:flex; direction:ltr; margin-top:-0.35rem; padding: 0 0.2rem; }
+  .msg-actions.mine{ justify-content:flex-end; }
+  .msg-actions.theirs{ justify-content:flex-start; padding-inline-start: 2.1rem; }
+  .msg-actions .del{ margin-inline-end:0.6rem; font-size:0.78rem; }
+  .msg-edit-row{ direction:rtl; }
   #chatImagePreviewWrap{ display:flex; align-items:center; gap:0.6rem; }
   .reply-quote{
     border-inline-start: 3px solid var(--accent); background: rgba(0,0,0,0.2); border-radius: 6px;
@@ -1234,38 +1261,40 @@
 
   function chatRowHtml(m, isMine){
     const editedTag = m.edited ? `<span class="ts" style="margin-inline-start:0.3rem">(معدّلة)</span>` : '';
+    const side = isMine ? 'mine' : 'theirs';
     if (chatEditingId === m.id){
       return `
-        <div class="msg" data-id="${m.id}">
-          <div class="msg-head">
-            <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</span></span>
-            <span class="ts">${timeAgo(m.tsMillis)}</span>
-          </div>
-          ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
-          <div class="row" style="margin-top:0.4rem">
-            <input type="text" class="chat-edit-input" data-id="${m.id}" value="${escapeHtml(m.text || '')}" style="flex:1; margin-bottom:0;">
-          </div>
-          <div class="row" style="margin-top:0.4rem">
-            <button class="btn small chat-save-btn" data-id="${m.id}">حفظ</button>
-            <button class="btn ghost small chat-cancel-btn" data-id="${m.id}">إلغاء</button>
+        <div class="msg-row ${side}" data-id="${m.id}">
+          ${!isMine ? avatarChipHtml(m.uid, m.user) : ''}
+          <div class="msg-bubble msg-edit-row">
+            <div class="row" style="margin:0">
+              <input type="text" class="chat-edit-input" data-id="${m.id}" value="${escapeHtml(m.text || '')}" style="flex:1; margin-bottom:0;">
+            </div>
+            <div class="row" style="margin-top:0.4rem; margin-bottom:0">
+              <button class="btn small chat-save-btn" data-id="${m.id}">حفظ</button>
+              <button class="btn ghost small chat-cancel-btn" data-id="${m.id}">إلغاء</button>
+            </div>
           </div>
         </div>`;
     }
     return `
-      <div class="msg" data-id="${m.id}">
-        <div class="msg-head">
-          <span class="who">${avatarChipHtml(m.uid, m.user)}<span class="author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</span></span>
-          <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
+      <div class="msg-row ${side}" data-id="${m.id}">
+        ${!isMine ? avatarChipHtml(m.uid, m.user) : ''}
+        <div class="msg-bubble">
+          <div class="bubble-author user-link" data-view-uid="${m.uid}">${escapeHtml(m.user)}</div>
+          ${m.replyTo ? `<div class="reply-quote"><strong>${escapeHtml(m.replyTo.user || '')}</strong>: ${escapeHtml((m.replyTo.text || '').slice(0, 80))}</div>` : ''}
+          ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
+          ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
+          <div class="bubble-meta">
+            <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
+          </div>
         </div>
-        ${m.replyTo ? `<div class="reply-quote"><strong>${escapeHtml(m.replyTo.user || '')}</strong>: ${escapeHtml((m.replyTo.text || '').slice(0, 80))}</div>` : ''}
-        ${m.photo ? `<img src="${m.photo}" class="chat-photo" alt="">` : ''}
-        ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
-        <div class="row" style="margin-top:0.3rem">
-          <button class="del chat-reply-btn" data-id="${m.id}">رد</button>
-          ${isMine ? `
-            <button class="del chat-edit-btn" data-id="${m.id}">تعديل</button>
-            <button class="del chat-del-btn" data-id="${m.id}">حذف</button>` : ''}
-        </div>
+      </div>
+      <div class="msg-actions ${side}" data-id="${m.id}">
+        <button class="del chat-reply-btn" data-id="${m.id}">رد</button>
+        ${isMine ? `
+          <button class="del chat-edit-btn" data-id="${m.id}">تعديل</button>
+          <button class="del chat-del-btn" data-id="${m.id}">حذف</button>` : ''}
       </div>`;
   }
 
