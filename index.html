@@ -147,6 +147,7 @@
   }
   .msg:last-child{ margin-bottom: 0; }
   .post-head, .msg-head{ display:flex; justify-content:space-between; gap:0.5rem; margin-bottom: 0.3rem; align-items:center; }
+  .head-edge{ display:flex; align-items:center; gap:0.4rem; flex-shrink:0; }
   .who{ display:flex; align-items:center; gap:0.45rem; }
   .author{ font-weight: 700; font-family:'Cairo'; }
   #threadTitle{ font-size: 0.95rem; }
@@ -177,34 +178,55 @@
   .bubble-author{ font-weight:700; font-family:'Cairo'; font-size:0.78rem; margin-bottom:0.1rem; color: var(--accent-strong); }
   .msg-row.mine .bubble-author{ display:none; }
   .bubble-meta{ display:flex; justify-content:flex-end; gap:0.3rem; margin-top:0.25rem; }
-  .msg-actions{ display:flex; direction:ltr; margin-top:-0.35rem; padding: 0 0.2rem; }
-  .msg-actions.mine{ justify-content:flex-end; }
-  .msg-actions.theirs{ justify-content:flex-start; padding-inline-start: 2.1rem; }
-  .msg-actions .del{ margin-inline-end:0.6rem; font-size:0.78rem; }
   .msg-edit-row{ direction:rtl; }
 
   /* ---- Reactions (posts, comments, messages) ---- */
   .reactions-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; direction:rtl; }
+  .reactions-bar:empty{ display:none; }
   .reaction-badge{
     display:inline-flex; align-items:center; gap:0.3rem; background: rgba(0,0,0,0.22);
     border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.82rem;
     color: var(--text); cursor:pointer; font-family:'Cairo';
   }
   .reaction-badge.mine{ border-color: var(--accent); background: rgba(243,183,140,0.25); color: var(--accent-strong); font-weight:700; }
-  .reaction-picker-wrap{ position:relative; display:inline-block; }
-  .reaction-add-btn{
-    background: rgba(0,0,0,0.18); border: 1px dashed var(--line); border-radius:999px; color: var(--text);
-    padding: 0.15rem 0.55rem; font-size: 0.95rem; cursor:pointer; line-height:1.4;
-  }
-  .reaction-picker{
-    position:absolute; bottom: 130%; inset-inline-start: 0; display:flex; gap:0.2rem;
-    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
-    padding: 0.35rem 0.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.35); z-index: 40; direction:ltr;
-  }
-  .reaction-picker button{ background:none; border:none; font-size:1.2rem; cursor:pointer; padding:0.1rem; line-height:1; }
-  .reaction-picker button:hover{ transform: scale(1.25); }
   .msg-row.mine .reactions-bar{ justify-content:flex-end; }
   .msg-row.mine .reaction-badge{ background: rgba(26,17,32,0.14); border-color: rgba(26,17,32,0.3); }
+
+  /* ---- Item menu (⋮ at the edge: edit / delete / reply / react) ---- */
+  .item-menu-wrap{ position:relative; display:inline-block; }
+  .item-menu-btn{
+    background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:1.15rem;
+    line-height:1; padding:0.1rem 0.45rem; border-radius:8px; font-family:'Cairo';
+  }
+  .item-menu-btn:hover, .item-menu-btn.open{ background: rgba(0,0,0,0.18); color: var(--text); }
+  .item-menu-dropdown{
+    position:absolute; top:100%; inset-inline-end:0; margin-top:0.3rem; z-index:45;
+    background: var(--card); border:1px solid var(--line); border-radius:12px; padding:0.35rem;
+    min-width:130px; max-width: min(78vw, 220px); box-shadow: 0 8px 22px rgba(0,0,0,0.4);
+    display:flex; flex-direction:column; direction:rtl;
+  }
+  .item-menu-dropdown.hidden{ display:none; }
+  .item-menu-option{
+    background:none; border:none; color: var(--text); text-align:start; padding:0.45rem 0.6rem;
+    font-size:0.85rem; cursor:pointer; border-radius:7px; font-family:'Cairo'; white-space:nowrap;
+  }
+  .item-menu-option:hover{ background: rgba(255,255,255,0.08); }
+  .item-menu-option.danger{ color: var(--danger); }
+  .item-menu-react{ display:flex; flex-direction:column; gap:0.3rem; padding:0.25rem 0.3rem 0.3rem; }
+  .item-menu-react.hidden{ display:none; }
+  .item-menu-react-row{ display:flex; align-items:center; gap:0.35rem; }
+  .item-menu-react input{
+    flex:1; min-width:0; background: rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:8px;
+    color: var(--text); padding:0.4rem 0.55rem; font-size:1rem; font-family:'Cairo';
+  }
+  .item-menu-react button{
+    background: var(--accent); border:none; color:#1a1120; border-radius:8px; padding:0.4rem 0.6rem;
+    font-size:0.85rem; cursor:pointer; font-family:'Cairo'; flex-shrink:0;
+  }
+  .item-menu-back{
+    background:none; border:none; color: var(--text-dim); text-align:start; padding:0.2rem 0.6rem 0.4rem;
+    font-size:0.78rem; cursor:pointer; font-family:'Cairo';
+  }
 
   /* ---- Comments ---- */
   .comments-toggle-btn{ display:inline-block; margin-top:0.5rem; }
@@ -870,16 +892,37 @@
     const badges = summary.map(r => `
       <button type="button" class="reaction-badge ${r.emoji === mine ? 'mine' : ''}" ${attrs} data-emoji="${r.emoji}">${r.emoji} <span>${r.uids.length}</span></button>
     `).join('');
+    if (!badges) return '';
+    return `<div class="reactions-bar">${badges}</div>`;
+  }
+
+  // ---------- Item menu (⋮): react / reply / edit / delete, all tucked behind one button ----------
+  function itemMenuHtml({ scope, id, postId, isMine, canReply, canEdit, replyAuthor, replyText }){
+    const attrs = `data-scope="${scope}" data-id="${id}"${postId ? ` data-post-id="${postId}"` : ''}`;
+    const replyAttrs = canReply ? `${attrs} data-author="${escapeHtml(replyAuthor || '')}" data-text="${escapeHtml(replyText || '')}"` : '';
+    let extraClasses = '';
+    if (scope === 'post') extraClasses = 'post';
+    else if (scope === 'comment') extraClasses = 'comment';
+    else if (scope === 'message') extraClasses = 'chat';
     return `
-      <div class="reactions-bar">
-        ${badges}
-        <span class="reaction-picker-wrap">
-          <button type="button" class="reaction-add-btn" ${attrs}>${mine || '🙂+'}</button>
-          <span class="reaction-picker hidden" ${attrs}>
-            ${REACTION_EMOJIS.map(e => `<button type="button" class="reaction-pick" ${attrs} data-emoji="${e}">${e}</button>`).join('')}
-          </span>
-        </span>
-      </div>`;
+      <span class="item-menu-wrap">
+        <button type="button" class="item-menu-btn" ${attrs}>⋮</button>
+        <div class="item-menu-dropdown hidden" ${attrs}>
+          <div class="item-menu-actions">
+            <button type="button" class="item-menu-option item-react-trigger" ${attrs}>🙂 تفاعل</button>
+            ${canReply ? `<button type="button" class="item-menu-option ${extraClasses}-reply-btn" ${replyAttrs}>↩️ رد</button>` : ''}
+            ${isMine && canEdit ? `<button type="button" class="item-menu-option ${extraClasses}-edit-btn" ${attrs}>✏️ تعديل</button>` : ''}
+            ${isMine ? `<button type="button" class="item-menu-option danger ${extraClasses}-del-btn" ${attrs}>🗑️ حذف</button>` : ''}
+          </div>
+          <div class="item-menu-react hidden">
+            <button type="button" class="item-menu-back">‹ رجوع</button>
+            <div class="item-menu-react-row">
+              <input type="text" class="reaction-emoji-input" ${attrs} placeholder="اختر إيموجي ⌨️" maxlength="8" autocomplete="off">
+              <button type="button" class="reaction-emoji-send" ${attrs}>إرسال</button>
+            </div>
+          </div>
+        </div>
+      </span>`;
   }
 
   function reactionDocRef(scope, id, postId){
@@ -914,35 +957,83 @@
     catch(e){ console.error('reaction failed:', e); }
   }
 
-  function closeAllReactionPickers(except){
-    document.querySelectorAll('.reaction-picker').forEach(p => { if (p !== except) p.classList.add('hidden'); });
-  }
-  document.addEventListener('click', () => closeAllReactionPickers());
-
   function wireReactions(root){
-    root.querySelectorAll('.reaction-add-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const picker = btn.nextElementSibling;
-        const willOpen = picker.classList.contains('hidden');
-        closeAllReactionPickers();
-        if (willOpen) picker.classList.remove('hidden');
-      });
-    });
-    root.querySelectorAll('.reaction-picker').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
-    root.querySelectorAll('.reaction-pick').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const { scope, id, postId, emoji } = btn.dataset;
-        handleReactionToggle(scope, id, postId, emoji);
-        closeAllReactionPickers();
-      });
-    });
     root.querySelectorAll('.reaction-badge').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const { scope, id, postId, emoji } = btn.dataset;
         handleReactionToggle(scope, id, postId, emoji);
+      });
+    });
+  }
+
+  // ---------- Item menus (⋮): open/close, switch to the react sub-panel, submit a keyboard emoji ----------
+  function closeAllItemMenus(except){
+    document.querySelectorAll('.item-menu-dropdown').forEach(d => {
+      if (d !== except){
+        d.classList.add('hidden');
+        const actions = d.querySelector('.item-menu-actions');
+        const react = d.querySelector('.item-menu-react');
+        if (actions) actions.classList.remove('hidden');
+        if (react) react.classList.add('hidden');
+      }
+    });
+    document.querySelectorAll('.item-menu-btn.open').forEach(b => { if (b !== except) b.classList.remove('open'); });
+  }
+  document.addEventListener('click', () => closeAllItemMenus());
+
+  function submitReactionInput(input){
+    const emoji = (input.value || '').trim();
+    if (!emoji) return;
+    const { scope, id, postId } = input.dataset;
+    handleReactionToggle(scope, id, postId, emoji);
+    input.value = '';
+    closeAllItemMenus();
+  }
+
+  function wireItemMenus(root){
+    root.querySelectorAll('.item-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = btn.nextElementSibling;
+        const willOpen = dropdown.classList.contains('hidden');
+        closeAllItemMenus();
+        if (willOpen){
+          dropdown.classList.remove('hidden');
+          btn.classList.add('open');
+        }
+      });
+    });
+    root.querySelectorAll('.item-menu-dropdown').forEach(d => d.addEventListener('click', e => e.stopPropagation()));
+    root.querySelectorAll('.item-react-trigger').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = btn.closest('.item-menu-dropdown');
+        dropdown.querySelector('.item-menu-actions').classList.add('hidden');
+        const react = dropdown.querySelector('.item-menu-react');
+        react.classList.remove('hidden');
+        const input = react.querySelector('.reaction-emoji-input');
+        input.focus();
+      });
+    });
+    root.querySelectorAll('.item-menu-back').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = btn.closest('.item-menu-dropdown');
+        dropdown.querySelector('.item-menu-react').classList.add('hidden');
+        dropdown.querySelector('.item-menu-actions').classList.remove('hidden');
+      });
+    });
+    root.querySelectorAll('.reaction-emoji-send').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        submitReactionInput(btn.previousElementSibling);
+      });
+    });
+    root.querySelectorAll('.reaction-emoji-input').forEach(input => {
+      input.addEventListener('click', e => e.stopPropagation());
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter'){ e.preventDefault(); submitReactionInput(input); }
       });
     });
   }
@@ -1271,15 +1362,14 @@
         <div class="comment-bubble">
           <div class="comment-head">
             <span class="comment-author user-link" data-view-uid="${c.uid}">${escapeHtml(c.author)}</span>
-            <span class="ts">${timeAgo(c.tsMillis)}</span>
+            <span class="head-edge">
+              <span class="ts">${timeAgo(c.tsMillis)}</span>
+              ${itemMenuHtml({ scope:'comment', id:c.id, postId, isMine, canReply:true, canEdit:false, replyAuthor:c.author, replyText:c.text })}
+            </span>
           </div>
           ${c.replyTo ? `<div class="comment-reply-quote"><strong>${escapeHtml(c.replyTo.author || '')}</strong>: ${escapeHtml((c.replyTo.text || '').slice(0, 80))}</div>` : ''}
           <div>${escapeHtml(c.text || '')}</div>
           ${reactionsBarHtml(c.reactions, 'comment', c.id, postId)}
-          <div class="row" style="margin-top:0.35rem">
-            <button class="del comment-reply-btn" data-id="${c.id}" data-post-id="${postId}" data-author="${escapeHtml(c.author)}" data-text="${escapeHtml(c.text || '')}">رد</button>
-            ${isMine ? `<button class="del comment-del-btn" data-id="${c.id}" data-post-id="${postId}">حذف</button>` : ''}
-          </div>
         </div>
       </div>`;
   }
@@ -1397,11 +1487,13 @@
       <div class="post" data-id="${p.id}">
         <div class="post-head">
           <span class="who"><span class="author-avatar">${avatarChipHtml(p.uid, p.author)}</span><span class="author user-link" data-view-uid="${p.uid}">${escapeHtml(p.author)}</span>${p.mood ? `<span class="post-mood">${p.mood}</span>` : ''}</span>
-          <span class="ts">${timeAgo(p.tsMillis)}${editedTag}</span>
+          <span class="head-edge">
+            <span class="ts">${timeAgo(p.tsMillis)}${editedTag}</span>
+            ${itemMenuHtml({ scope:'post', id:p.id, postId:null, isMine, canReply:false, canEdit:true })}
+          </span>
         </div>
         ${p.photo ? `<img src="${p.photo}" class="chat-photo" alt="">` : ''}
         ${p.text ? `<div>${escapeHtml(p.text)}</div>` : ''}
-        ${isMine ? `<div style="margin-top:0.4rem"><button class="del post-edit-btn" data-id="${p.id}">تعديل</button><button class="del post-del-btn" data-id="${p.id}">حذف</button></div>` : ''}
         ${reactionsBarHtml(p.reactions, 'post', p.id)}
         <button type="button" class="del comments-toggle-btn" data-id="${p.id}">${openCommentsSet.has(p.id) ? '🔼 إخفاء التعليقات' : '💬 التعليقات' + (commentsCache[p.id] ? ` (${commentsCache[p.id].length})` : '')}</button>
         ${openCommentsSet.has(p.id) ? commentsSectionHtml(p.id) : ''}
@@ -1443,6 +1535,7 @@
       });
     });
     wireReactions(list);
+    wireItemMenus(list);
     wireCommentEvents(list);
   }
 
@@ -1557,14 +1650,9 @@
           ${reactionsBarHtml(m.reactions, 'message', m.id)}
           <div class="bubble-meta">
             <span class="ts">${timeAgo(m.tsMillis)}${editedTag}</span>
+            ${itemMenuHtml({ scope:'message', id:m.id, postId:null, isMine, canReply:true, canEdit:true })}
           </div>
         </div>
-      </div>
-      <div class="msg-actions ${side}" data-id="${m.id}">
-        <button class="del chat-reply-btn" data-id="${m.id}">رد</button>
-        ${isMine ? `
-          <button class="del chat-edit-btn" data-id="${m.id}">تعديل</button>
-          <button class="del chat-del-btn" data-id="${m.id}">حذف</button>` : ''}
       </div>`;
   }
 
@@ -1576,6 +1664,7 @@
       list.innerHTML = chatCache.map(m => chatRowHtml(m, !!(currentUser && m.uid === currentUser.uid))).join('');
       list.scrollTop = list.scrollHeight;
       wireReactions(list);
+      wireItemMenus(list);
 
       list.querySelectorAll('.chat-del-btn').forEach(btn => {
         btn.addEventListener('click', () => {
